@@ -16,6 +16,8 @@ class Player:
         self.level = 1     # Start at level 1
         self.attack_cooldown = 500  # 500ms cooldown for melee attacks
         self.last_attack_time = pygame.time.get_ticks()
+        self.projectile_cooldown = 1000  # 1000ms cooldown for ranged attacks
+        self.last_projectile_time = pygame.time.get_ticks()
         self.aim_direction = pygame.math.Vector2(1, 0)  # Default aim direction (right)
         self.font = pygame.font.SysFont(None, 24)  # Font for rendering text
 
@@ -60,6 +62,7 @@ class Player:
         screen.blit(self.image, self.rect.topleft)
         self.draw_health_and_mana(screen)
         self.draw_xp_text(screen)
+        self.draw_level_text(screen)  # Draw player level
         self.draw_aim_arrow(screen)
 
     def draw_health_and_mana(self, screen):
@@ -85,21 +88,29 @@ class Player:
         xp_surface = self.font.render(xp_text, True, (255, 255, 255))
         screen.blit(xp_surface, (10, 70))  # Position the text below the health and mana bars
 
+    def draw_level_text(self, screen):
+        """Draw the player's current level as text."""
+        level_text = f"Level: {self.level}"
+        level_surface = self.font.render(level_text, True, (255, 255, 255))
+        screen.blit(level_surface, (10, 100))  # Position the text below the XP text
+
     def draw_aim_arrow(self, screen):
         """Draw an arrow pointing in the current aim direction."""
-        arrow_length = 20
+        arrow_length = 30  # Increase the length of the arrow
+        arrowhead_size = 10  # Size of the arrowhead
+
         start_pos = self.rect.center
         end_pos = (
             start_pos[0] + self.aim_direction.x * arrow_length,
             start_pos[1] + self.aim_direction.y * arrow_length
         )
-        pygame.draw.line(screen, (255, 255, 255), start_pos, end_pos, 3)
+
         # Draw arrowhead
         if self.aim_direction.length() > 0:
             angle = self.aim_direction.angle_to(pygame.Vector2(1, 0))
             arrowhead_points = [
-                (end_pos[0] + 5 * self.aim_direction.rotate(135).x, end_pos[1] + 5 * self.aim_direction.rotate(135).y),
-                (end_pos[0] + 5 * self.aim_direction.rotate(-135).x, end_pos[1] + 5 * self.aim_direction.rotate(-135).y)
+                (end_pos[0] + arrowhead_size * self.aim_direction.rotate(135).x, end_pos[1] + arrowhead_size * self.aim_direction.rotate(135).y),
+                (end_pos[0] + arrowhead_size * self.aim_direction.rotate(-135).x, end_pos[1] + arrowhead_size * self.aim_direction.rotate(-135).y)
             ]
             pygame.draw.polygon(screen, (255, 255, 255), [end_pos] + arrowhead_points)
 
@@ -115,10 +126,12 @@ class Player:
 
     def ranged_attack(self, projectiles):
         """Shoot a projectile in the direction the player is facing."""
-        if self.mana >= 10:  # Example mana cost
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_projectile_time >= self.projectile_cooldown and self.mana >= 10:
             projectile = Projectile(self.rect.centerx, self.rect.centery, self.aim_direction)
             projectiles.append(projectile)
             self.use_mana(10)  # Reduce mana
+            self.last_projectile_time = current_time  # Update the last projectile time
 
     def gain_xp(self, amount):
         """Increase the player's XP and handle leveling up."""

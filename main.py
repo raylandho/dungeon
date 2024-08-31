@@ -42,7 +42,10 @@ def main():
 
         # Ranged attack (R key)
         if keys[pygame.K_r]:
-            player.ranged_attack(projectiles)
+            current_time = pygame.time.get_ticks()
+            if current_time - player.last_attack_time >= player.attack_cooldown:
+                player.ranged_attack(projectiles)
+                player.last_attack_time = current_time
 
         # Move the enemies towards the player if they are still alive
         for enemy in enemies:
@@ -64,7 +67,7 @@ def main():
                 # Check collision with each enemy
                 for enemy in enemies[:]:
                     if projectile.rect.colliderect(enemy.rect):
-                        if enemy.take_damage(20):  # Deal damage and check if the enemy dies
+                        if enemy.take_damage(projectile.damage):  # Use projectile's damage
                             print("Enemy has died")
                             player.gain_xp(50)  # Award XP for killing the enemy
                             enemies.remove(enemy)  # Remove the dead enemy from the list

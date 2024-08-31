@@ -8,7 +8,7 @@ class Enemy:
         self.image = pygame.Surface((PLAYER_SIZE, PLAYER_SIZE))
         self.image.fill((255, 0, 0))  # Red enemy
         self.rect = self.image.get_rect(topleft=(x, y))
-        self.health = 50  # Enemy health
+        self.health = 10  # Enemy health
 
     def move_towards_player(self, player_rect, walls):
         """Simple AI to move the enemy towards the player."""

@@ -1,5 +1,3 @@
-# projectile.py
-
 import pygame
 from settings import PLAYER_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT
 
@@ -13,6 +11,10 @@ class Projectile:
         self.rect = self.image.get_rect(center=(x, y))
         self.direction = direction
         self.speed = speed
+        self.damage = 25  # Damage dealt by the projectile
+        self.mana_cost = 10  # Mana cost for shooting the projectile
+        self.cooldown = 1000  # Cooldown in milliseconds
+        self.last_shot_time = pygame.time.get_ticks()  # Track the time of the last shot
 
     def move(self):
         self.rect.x += self.direction.x * self.speed
@@ -23,6 +25,14 @@ class Projectile:
 
     def is_off_screen(self):
         return not (0 <= self.rect.x <= SCREEN_WIDTH and 0 <= self.rect.y <= SCREEN_HEIGHT)
+
+    def can_shoot(self):
+        """Check if the projectile can be shot based on cooldown."""
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_shot_time >= self.cooldown:
+            self.last_shot_time = current_time
+            return True
+        return False
 
 class MeleeAttack(Projectile):
     def __init__(self, player_rect):
