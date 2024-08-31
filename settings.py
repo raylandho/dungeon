@@ -1,8 +1,5 @@
 # settings.py
 
-# Screen settings
-SCREEN_WIDTH = 1920
-SCREEN_HEIGHT = 1080
-TILE_SIZE = 32
-PLAYER_SIZE = 30
+TILE_SIZE = 32  # Example tile size
 FPS = 60
+PLAYER_SIZE = 64  # Example player size

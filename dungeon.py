@@ -1,10 +1,10 @@
 import pygame
-from settings import TILE_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT
+from settings import TILE_SIZE
 
 class Dungeon:
-    def __init__(self):
-        self.tiles_x = SCREEN_WIDTH // TILE_SIZE
-        self.tiles_y = SCREEN_HEIGHT // TILE_SIZE
+    def __init__(self, screen_width, screen_height):
+        self.tiles_x = screen_width // TILE_SIZE
+        self.tiles_y = screen_height // TILE_SIZE
         self.tile_image = pygame.Surface((TILE_SIZE, TILE_SIZE))
         self.tile_image.fill((0, 0, 0))  # Black tiles for walls
         self.border_color = (255, 255, 255)  # White color for border

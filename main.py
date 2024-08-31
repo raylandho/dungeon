@@ -1,18 +1,35 @@
 import pygame
 import sys
-from settings import SCREEN_WIDTH, SCREEN_HEIGHT, FPS
-from player import Player, Projectile
+from settings import TILE_SIZE, FPS
+from player import Player
+from projectile import Projectile
 from enemy import Enemy
 from dungeon import Dungeon
 
+def toggle_fullscreen(current_mode, screen, SCREEN_WIDTH, SCREEN_HEIGHT):
+    if current_mode == "fullscreen":
+        screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE | pygame.NOFRAME)
+        current_mode = "borderless"
+    else:
+        screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
+        current_mode = "fullscreen"
+    return screen, current_mode
+
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    
+    # Set initial mode to fullscreen windowed mode and get screen dimensions
+    info = pygame.display.Info()
+    SCREEN_WIDTH = info.current_w
+    SCREEN_HEIGHT = info.current_h
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE | pygame.NOFRAME)
+    
+    current_mode = "borderless"
     pygame.display.set_caption('Dungeon Crawler')
     clock = pygame.time.Clock()
 
     # Initialize game objects
-    dungeon = Dungeon()
+    dungeon = Dungeon(SCREEN_WIDTH, SCREEN_HEIGHT)
     player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
     walls = dungeon.get_walls()
 
@@ -31,6 +48,10 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F11:
+                    # Toggle between fullscreen and borderless fullscreen
+                    screen, current_mode = toggle_fullscreen(current_mode, screen, SCREEN_WIDTH, SCREEN_HEIGHT)
 
         keys = pygame.key.get_pressed()
         player.handle_movement(keys, walls)
@@ -44,7 +65,9 @@ def main():
         if keys[pygame.K_r]:
             current_time = pygame.time.get_ticks()
             if current_time - player.last_attack_time >= player.attack_cooldown:
-                player.ranged_attack(projectiles)
+                projectile = Projectile(player.rect.centerx, player.rect.centery, player.aim_direction, SCREEN_WIDTH, SCREEN_HEIGHT)
+                projectiles.append(projectile)
+                player.use_mana(projectile.mana_cost)
                 player.last_attack_time = current_time
 
         # Move the enemies towards the player if they are still alive

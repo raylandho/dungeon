@@ -1,8 +1,8 @@
 import pygame
-from settings import PLAYER_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT
+from settings import PLAYER_SIZE
 
 class Projectile:
-    def __init__(self, x, y, direction, speed=5, size=None):
+    def __init__(self, x, y, direction, screen_width, screen_height, speed=5, size=None):
         if size is None:
             size = PLAYER_SIZE // 2  # Default size
         self.size = size
@@ -15,6 +15,8 @@ class Projectile:
         self.mana_cost = 10  # Mana cost for shooting the projectile
         self.cooldown = 1000  # Cooldown in milliseconds
         self.last_shot_time = pygame.time.get_ticks()  # Track the time of the last shot
+        self.screen_width = screen_width  # Store screen width
+        self.screen_height = screen_height  # Store screen height
 
     def move(self):
         self.rect.x += self.direction.x * self.speed
@@ -24,7 +26,7 @@ class Projectile:
         screen.blit(self.image, self.rect.topleft)
 
     def is_off_screen(self):
-        return not (0 <= self.rect.x <= SCREEN_WIDTH and 0 <= self.rect.y <= SCREEN_HEIGHT)
+        return not (0 <= self.rect.x <= self.screen_width and 0 <= self.rect.y <= self.screen_height)
 
     def can_shoot(self):
         """Check if the projectile can be shot based on cooldown."""
@@ -36,7 +38,7 @@ class Projectile:
 
 class MeleeAttack(Projectile):
     def __init__(self, player_rect):
-        super().__init__(player_rect.centerx, player_rect.centery, pygame.math.Vector2(0, 0), speed=0)
+        super().__init__(player_rect.centerx, player_rect.centery, pygame.math.Vector2(0, 0), player_rect.width, player_rect.height, speed=0)
         self.rect = player_rect.copy()  # The melee attack area is the same as the player's rect
         self.image = pygame.Surface((self.rect.width, self.rect.height))
         self.image.fill((255, 0, 0))  # Red for melee attack

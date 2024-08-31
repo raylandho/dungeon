@@ -1,0 +1,13 @@
+Easy
+- Display Level Up on screen
+- Update enemies turning white on hit
+- Add slight delay to switching directions to make it easier
+
+Medium
+- Add more mobs
+- Add more attacks (as level up)
+
+Hard
+- Leveling system (pathways)
+- Escape screen to view level up pathways
+- Infinite dungeon generation (maze)

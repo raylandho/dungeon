@@ -1,5 +1,5 @@
 import pygame
-from settings import PLAYER_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT
+from settings import PLAYER_SIZE
 from projectile import Projectile, MeleeAttack
 
 class Player:
@@ -16,8 +16,6 @@ class Player:
         self.level = 1     # Start at level 1
         self.attack_cooldown = 500  # 500ms cooldown for melee attacks
         self.last_attack_time = pygame.time.get_ticks()
-        self.projectile_cooldown = 1000  # 1000ms cooldown for ranged attacks
-        self.last_projectile_time = pygame.time.get_ticks()
         self.aim_direction = pygame.math.Vector2(1, 0)  # Default aim direction (right)
         self.font = pygame.font.SysFont(None, 24)  # Font for rendering text
 
@@ -127,11 +125,11 @@ class Player:
     def ranged_attack(self, projectiles):
         """Shoot a projectile in the direction the player is facing."""
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_projectile_time >= self.projectile_cooldown and self.mana >= 10:
+        if current_time - self.last_attack_time >= self.attack_cooldown and self.mana >= 10:
             projectile = Projectile(self.rect.centerx, self.rect.centery, self.aim_direction)
             projectiles.append(projectile)
             self.use_mana(10)  # Reduce mana
-            self.last_projectile_time = current_time  # Update the last projectile time
+            self.last_attack_time = current_time  # Update the last attack time
 
     def gain_xp(self, amount):
         """Increase the player's XP and handle leveling up."""
