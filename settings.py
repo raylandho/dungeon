@@ -1,0 +1,8 @@
+# settings.py
+
+# Screen settings
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+TILE_SIZE = 40
+PLAYER_SIZE = 30
+FPS = 60
