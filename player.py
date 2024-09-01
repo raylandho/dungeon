@@ -93,11 +93,15 @@ class Player:
         screen.blit(level_surface, (10, 100))  # Position the text below the XP text
 
     def draw_aim_arrow(self, screen):
-        """Draw an arrow pointing in the current aim direction."""
-        arrow_length = 30  # Increase the length of the arrow
+        """Draw an arrow pointing in the current aim direction, just outside the player's box."""
+        arrow_length = 30  # Length of the arrow
         arrowhead_size = 10  # Size of the arrowhead
 
-        start_pos = self.rect.center
+        # Start the arrow just outside the player's box
+        start_pos = (
+            self.rect.centerx + self.aim_direction.x * (self.rect.width // 2 + 2),
+            self.rect.centery + self.aim_direction.y * (self.rect.height // 2 + 2)
+        )
         end_pos = (
             start_pos[0] + self.aim_direction.x * arrow_length,
             start_pos[1] + self.aim_direction.y * arrow_length
@@ -105,7 +109,6 @@ class Player:
 
         # Draw arrowhead
         if self.aim_direction.length() > 0:
-            angle = self.aim_direction.angle_to(pygame.Vector2(1, 0))
             arrowhead_points = [
                 (end_pos[0] + arrowhead_size * self.aim_direction.rotate(135).x, end_pos[1] + arrowhead_size * self.aim_direction.rotate(135).y),
                 (end_pos[0] + arrowhead_size * self.aim_direction.rotate(-135).x, end_pos[1] + arrowhead_size * self.aim_direction.rotate(-135).y)

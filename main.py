@@ -42,6 +42,9 @@ def main():
     # Initialize projectiles list
     projectiles = []
 
+    # Game state
+    game_started = False
+
     # Main game loop
     running = True
     while running:
@@ -52,6 +55,20 @@ def main():
                 if event.key == pygame.K_F11:
                     # Toggle between fullscreen and borderless fullscreen
                     screen, current_mode = toggle_fullscreen(current_mode, screen, SCREEN_WIDTH, SCREEN_HEIGHT)
+                if event.key == pygame.K_SPACE and not game_started:
+                    # Start the game when space is pressed
+                    game_started = True
+
+        if not game_started:
+            # Display start screen
+            screen.fill((0, 0, 0))
+            font = pygame.font.SysFont(None, 74)
+            text_surface = font.render("Space to Start", True, (255, 255, 255))
+            text_rect = text_surface.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+            screen.blit(text_surface, text_rect)
+            pygame.display.flip()
+            clock.tick(FPS)
+            continue
 
         keys = pygame.key.get_pressed()
         player.handle_movement(keys, walls)
@@ -73,6 +90,7 @@ def main():
         # Move the enemies towards the player if they are still alive
         for enemy in enemies:
             enemy.move_towards_player(player.rect, walls)
+            enemy.update()  # Update enemy state (including flash effect)
 
         # Clear the screen first
         screen.fill((0, 0, 0))  # Clear screen with black

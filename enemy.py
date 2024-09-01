@@ -1,14 +1,16 @@
-# enemy.py
-
 import pygame
 from settings import TILE_SIZE, PLAYER_SIZE
 
 class Enemy:
     def __init__(self, x, y):
         self.image = pygame.Surface((PLAYER_SIZE, PLAYER_SIZE))
-        self.image.fill((255, 0, 0))  # Red enemy
+        self.original_color = (255, 0, 0)  # Red enemy
+        self.image.fill(self.original_color)
         self.rect = self.image.get_rect(topleft=(x, y))
-        self.health = 10  # Enemy health
+        self.health = 50  # Enemy health
+        self.is_flashing = False
+        self.flash_duration = 100  # Duration of flash in milliseconds
+        self.flash_start_time = 0  # Start time of the flash
 
     def move_towards_player(self, player_rect, walls):
         """Simple AI to move the enemy towards the player."""
@@ -34,8 +36,24 @@ class Enemy:
         screen.blit(self.image, self.rect.topleft)
 
     def take_damage(self, amount):
-        """Reduce the enemy's health by a specified amount and check if they die."""
+        """Reduce the enemy's health by a specified amount and trigger the flash effect."""
         self.health = max(0, self.health - amount)
+        self.start_flash()
+
         if self.health == 0:
             return True  # Return True if the enemy dies
         return False
+
+    def start_flash(self):
+        """Start the flash effect by changing the color to white."""
+        self.is_flashing = True
+        self.image.fill((255, 255, 255))  # Change color to white
+        self.flash_start_time = pygame.time.get_ticks()  # Record the time when the flash starts
+
+    def update(self):
+        """Update the enemy's state, including the flash effect."""
+        if self.is_flashing:
+            current_time = pygame.time.get_ticks()
+            if current_time - self.flash_start_time >= self.flash_duration:
+                self.image.fill(self.original_color)  # Revert to the original color
+                self.is_flashing = False
