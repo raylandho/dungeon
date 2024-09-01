@@ -4,7 +4,8 @@ from projectile import Projectile, MeleeAttack
 
 class Player:
     def __init__(self, x, y):
-        self.image = pygame.Surface((PLAYER_SIZE, PLAYER_SIZE))
+        self.size = PLAYER_SIZE  # Update to use the correct size
+        self.image = pygame.Surface((self.size, self.size))
         self.image.fill((0, 255, 0))  # Green player
         self.rect = self.image.get_rect(topleft=(x, y))
         self.max_health = 100  # Store max health for refilling purposes
@@ -21,15 +22,16 @@ class Player:
 
     def handle_movement(self, keys, walls):
         new_pos = self.rect.topleft
+        movement_speed = 3  # Adjust this speed according to the new player size
 
         if keys[pygame.K_LEFT]:
-            new_pos = (new_pos[0] - 5, new_pos[1])
+            new_pos = (new_pos[0] - movement_speed, new_pos[1])
         if keys[pygame.K_RIGHT]:
-            new_pos = (new_pos[0] + 5, new_pos[1])
+            new_pos = (new_pos[0] + movement_speed, new_pos[1])
         if keys[pygame.K_UP]:
-            new_pos = (new_pos[0], new_pos[1] - 5)
+            new_pos = (new_pos[0], new_pos[1] - movement_speed)
         if keys[pygame.K_DOWN]:
-            new_pos = (new_pos[0], new_pos[1] + 5)
+            new_pos = (new_pos[0], new_pos[1] + movement_speed)
 
         if not self.check_collision(new_pos, walls):
             self.rect.topleft = new_pos
@@ -50,7 +52,7 @@ class Player:
             self.aim_direction = direction
 
     def check_collision(self, new_pos, walls):
-        future_rect = pygame.Rect(new_pos, (PLAYER_SIZE, PLAYER_SIZE))
+        future_rect = pygame.Rect(new_pos, (self.size, self.size))
         for wall in walls:
             if future_rect.colliderect(wall):
                 return True
