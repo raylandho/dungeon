@@ -28,16 +28,13 @@ def main():
     pygame.display.set_caption('Dungeon Crawler')
     clock = pygame.time.Clock()
 
-    # Initialize game objects
+    # Initialize the dungeon and player
     dungeon = Dungeon(SCREEN_WIDTH, SCREEN_HEIGHT)
-    player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
-    walls = dungeon.get_walls()
+    player_start_x, player_start_y = dungeon.get_random_open_position()
+    player = Player(player_start_x, player_start_y)
 
     # Initialize enemies list
-    enemies = [
-        Enemy(200, 200),
-        Enemy(100, 100)
-    ]
+    enemies = [Enemy(200, 200), Enemy(100, 100)]
     
     # Initialize projectiles list
     projectiles = []
@@ -71,8 +68,30 @@ def main():
             continue
 
         keys = pygame.key.get_pressed()
-        player.handle_movement(keys, walls)
+        player.handle_movement(keys, dungeon.get_walls())
         player.update_aim_direction(keys)
+
+        # Check for player collision with exits
+        for exit_pos in dungeon.get_exit_positions():
+            exit_rect = pygame.Rect(exit_pos[0], exit_pos[1], TILE_SIZE * 2, TILE_SIZE)
+            if player.rect.colliderect(exit_rect):
+                # Determine the spawn position based on the exit used
+                if exit_pos[1] == 0:  # Top exit
+                    player.rect.y = SCREEN_HEIGHT - TILE_SIZE * 3  # Ensure the player is not in the wall
+                    player.rect.x = exit_pos[0]
+                elif exit_pos[1] == SCREEN_HEIGHT - TILE_SIZE:  # Bottom exit
+                    player.rect.y = TILE_SIZE  # Ensure the player is not in the wall
+                    player.rect.x = exit_pos[0]
+                elif exit_pos[0] == 0:  # Left exit
+                    player.rect.x = SCREEN_WIDTH - TILE_SIZE * 3  # Ensure the player is not in the wall
+                    player.rect.y = exit_pos[1]
+                elif exit_pos[0] == SCREEN_WIDTH - TILE_SIZE * 2:  # Right exit
+                    player.rect.x = TILE_SIZE  # Ensure the player is not in the wall
+                    player.rect.y = exit_pos[1]
+
+                # Generate a new dungeon after teleporting
+                dungeon = Dungeon(SCREEN_WIDTH, SCREEN_HEIGHT)
+                break
 
         # Melee attack (Spacebar)
         if keys[pygame.K_SPACE]:
@@ -89,7 +108,7 @@ def main():
 
         # Move the enemies towards the player if they are still alive
         for enemy in enemies:
-            enemy.move_towards_player(player.rect, walls)
+            enemy.move_towards_player(player.rect, dungeon.get_walls())
             enemy.update()  # Update enemy state (including flash effect)
 
         # Clear the screen first
