@@ -60,6 +60,17 @@ class Dungeon:
                 layout[y+1][self.tiles_x - 1] = '2'
                 exits.append((y, self.tiles_x - 1))
 
+    def clear_spawn_area(self, layout, x, y):
+        """Ensure that the spawn area near an exit is clear."""
+        if 0 <= x < self.tiles_x and 0 <= y < self.tiles_y:
+            layout[y][x] = '0'
+            if x + 1 < self.tiles_x:
+                layout[y][x + 1] = '0'
+            if y + 1 < self.tiles_y:
+                layout[y + 1][x] = '0'
+                if x + 1 < self.tiles_x:
+                    layout[y + 1][x + 1] = '0'
+
     def get_walls(self):
         walls = []
         for row_index, row in enumerate(self.layout):
