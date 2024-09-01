@@ -31,10 +31,75 @@ class Dungeon:
             y = random.randint(1, self.tiles_y - 2)
             layout[y][x] = '1'
 
+        # Add predefined shapes and DFS structures
+        self.add_structures(layout)
+        self.add_dfs_structures(layout)
+
         # Add exits on the outer walls
         self.add_exits(layout)
 
         return layout
+
+    def add_structures(self, layout):
+        # Define some predefined shapes
+        shapes = [
+            # Long horizontal wall
+            [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)],
+
+            # Long vertical wall
+            [(0, 0), (0, 1), (0, 2), (0, 3), (0, 4)],
+
+            # L-shape
+            [(0, 0), (1, 0), (2, 0), (0, 1), (0, 2)],
+
+            # U-shape
+            [(0, 0), (1, 0), (2, 0), (0, 1), (2, 1), (0, 2), (2, 2)],
+
+            # Helix shape
+            [(0, 0), (1, 0), (2, 0), (2, 1), (1, 1), (1, 2), (2, 2)]
+        ]
+
+        # Add 0-3 smaller structures
+        num_structures = random.randint(0, 3)
+        for _ in range(num_structures):
+            shape = random.choice(shapes)
+            width = max(x for x, y in shape) + 1
+            height = max(y for x, y in shape) + 1
+            x = random.randint(1, self.tiles_x - width - 1)
+            y = random.randint(1, self.tiles_y - height - 1)
+
+            for dx, dy in shape:
+                layout[y + dy][x + dx] = '1'
+
+    def add_dfs_structures(self, layout):
+        num_structures = random.randint(1, 3)
+        for _ in range(num_structures):
+            start_x = random.randint(2, self.tiles_x - 3)
+            start_y = random.randint(2, self.tiles_y - 3)
+            self.dfs_structure(layout, start_x, start_y, depth_limit=10)
+            
+    def dfs_structure(self, layout, x, y, depth_limit):
+        stack = [(x, y, 0)]
+        layout[y][x] = '1'
+
+        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+
+        while stack:
+            cx, cy, depth = stack[-1]
+            random.shuffle(directions)  # Randomize the direction order
+            moved = False
+
+            for dx, dy in directions:
+                nx, ny = cx + dx, cy + dy
+                if 1 <= nx < self.tiles_x - 1 and 1 <= ny < self.tiles_y - 1 and layout[ny][nx] == '0':
+                    if depth < depth_limit:  # Limit the depth of the DFS
+                        layout[ny][nx] = '1'
+                        stack.append((nx, ny, depth + 1))
+                        moved = True
+                        break
+
+            if not moved:
+                stack.pop()  # Backtrack if no movement is possible
 
     def add_exits(self, layout):
         # Add 2 random exits in the outer walls

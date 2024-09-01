@@ -31,6 +31,10 @@ def main():
     # Initialize the dungeon and player
     dungeon = Dungeon(SCREEN_WIDTH, SCREEN_HEIGHT)
     player_start_x, player_start_y = dungeon.get_random_open_position()
+    
+    # Ensure the player's spawn area is clear of walls
+    dungeon.clear_spawn_area(dungeon.layout, player_start_x // TILE_SIZE, player_start_y // TILE_SIZE)
+    
     player = Player(player_start_x, player_start_y)
 
     # Initialize enemies list
@@ -80,17 +84,26 @@ def main():
                     player.rect.y = SCREEN_HEIGHT - TILE_SIZE * 3  # Ensure the player is not in the wall
                     player.rect.x = exit_pos[0]
                 elif exit_pos[1] == SCREEN_HEIGHT - TILE_SIZE:  # Bottom exit
-                    player.rect.y = TILE_SIZE  # Ensure the player is not in the wall
+                    player.rect.y = SCREEN_HEIGHT - TILE_SIZE * 2  # Spawn one tile above the bottom wall
                     player.rect.x = exit_pos[0]
                 elif exit_pos[0] == 0:  # Left exit
                     player.rect.x = SCREEN_WIDTH - TILE_SIZE * 3  # Ensure the player is not in the wall
                     player.rect.y = exit_pos[1]
                 elif exit_pos[0] == SCREEN_WIDTH - TILE_SIZE * 2:  # Right exit
-                    player.rect.x = TILE_SIZE  # Ensure the player is not in the wall
+                    player.rect.x = TILE_SIZE
                     player.rect.y = exit_pos[1]
 
                 # Generate a new dungeon after teleporting
+                previous_exit = (exit_pos[0] // TILE_SIZE, exit_pos[1] // TILE_SIZE)
                 dungeon = Dungeon(SCREEN_WIDTH, SCREEN_HEIGHT)
+
+                # Fill the gap left by the previous exit with a wall or another exit
+                if previous_exit[1] == 0 or previous_exit[1] == (SCREEN_HEIGHT // TILE_SIZE) - 1:  # Top or bottom
+                    dungeon.layout[previous_exit[1]][previous_exit[0]] = '1'  # Wall
+                elif previous_exit[0] == 0 or previous_exit[0] == (SCREEN_WIDTH // TILE_SIZE) - 1:  # Left or right
+                    dungeon.layout[previous_exit[1]][previous_exit[0]] = '1'  # Wall
+
+                dungeon.clear_spawn_area(dungeon.layout, player.rect.x // TILE_SIZE, player.rect.y // TILE_SIZE)
                 break
 
         # Melee attack (Spacebar)
