@@ -2,7 +2,7 @@ import pygame
 import sys
 from settings import TILE_SIZE, FPS
 from player import Player
-from projectile import Projectile
+from projectile import Projectile, MeleeAttack
 from enemy import Enemy
 from dungeon import Dungeon
 
@@ -64,7 +64,6 @@ def main():
                 if event.key == pygame.K_r:  # Shoot projectile
                     current_time = pygame.time.get_ticks()
                     if current_time - player.last_attack_time >= player.attack_cooldown and player.mana >= 10:
-                        # Offset the projectile's start position by the camera offset
                         start_x = player.rect.centerx + player.aim_direction.x * (player.size // 2)
                         start_y = player.rect.centery + player.aim_direction.y * (player.size // 2)
                         projectile = Projectile(start_x, start_y, player.aim_direction, dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
@@ -74,6 +73,14 @@ def main():
                         print(f"Projectile launched at ({start_x}, {start_y}) in direction {player.aim_direction}")
                     else:
                         print("Not enough mana to shoot.")
+                if event.key == pygame.K_f:  # Melee attack
+                    melee_attack = MeleeAttack(player.rect, attack_range=0, damage=100)
+                    kills = melee_attack.check_collision(enemies)
+                    if kills > 0:
+                        xp_per_kill = 50  # Define XP gained per kill
+                        total_xp = xp_per_kill * kills
+                        player.gain_xp(total_xp)
+                        print(f"Melee attack killed {kills} enemies and earned {total_xp} XP!")
 
         if not game_started:
             # Display start screen
@@ -122,6 +129,7 @@ def main():
                     if projectile.rect.colliderect(enemy.rect):
                         if enemy.take_damage(projectile.damage):
                             enemies.remove(enemy)  # Remove enemy if it dies
+                            player.gain_xp(50)  # Award XP for the kill
                         projectiles.remove(projectile)  # Remove the projectile
                         break  # Stop checking other enemies for this projectile
 
