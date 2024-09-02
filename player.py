@@ -4,25 +4,26 @@ from projectile import Projectile, MeleeAttack
 
 class Player:
     def __init__(self, x, y):
-        self.size = PLAYER_SIZE  # Update to use the correct size
+        self.size = PLAYER_SIZE
         self.image = pygame.Surface((self.size, self.size))
         self.image.fill((0, 255, 0))  # Green player
         self.rect = self.image.get_rect(topleft=(x, y))
-        self.max_health = 100  # Store max health for refilling purposes
-        self.health = self.max_health  # Current health
-        self.max_mana = 50  # Store max mana for refilling purposes
-        self.mana = self.max_mana  # Current mana
-        self.xp = 0        # Start with 0 XP
-        self.xp_for_next_level = 100  # XP required for the next level
-        self.level = 1     # Start at level 1
-        self.attack_cooldown = 500  # 500ms cooldown for melee attacks
+        self.max_health = 100
+        self.health = self.max_health
+        self.max_mana = 50
+        self.mana = self.max_mana
+        self.xp = 0
+        self.xp_for_next_level = 100
+        self.level = 1
+        self.points = 0  # Points for leveling up
+        self.attack_cooldown = 500  # Cooldown for attacks
         self.last_attack_time = pygame.time.get_ticks()
-        self.aim_direction = pygame.math.Vector2(1, 0)  # Default aim direction (right)
-        self.font = pygame.font.SysFont(None, 24)  # Font for rendering text
+        self.aim_direction = pygame.math.Vector2(1, 0)
+        self.font = pygame.font.SysFont(None, 24)
 
     def handle_movement(self, keys, walls):
         new_pos = self.rect.topleft
-        movement_speed = 3  # Adjust this speed according to the new player size
+        movement_speed = 3
 
         if keys[pygame.K_LEFT]:
             new_pos = (new_pos[0] - movement_speed, new_pos[1])
@@ -48,8 +49,8 @@ class Player:
             direction.y = 1
 
         if direction.length() > 0:
-            direction.normalize_ip()  # Normalize the vector to ensure consistent speed
-            self.aim_direction = direction  # Set the aim direction
+            direction.normalize_ip()
+            self.aim_direction = direction
 
     def check_collision(self, new_pos, walls):
         future_rect = pygame.Rect(new_pos, (self.size, self.size))
@@ -64,44 +65,36 @@ class Player:
         screen.blit(self.image, (screen_x, screen_y))
         self.draw_health_and_mana(screen)
         self.draw_xp_text(screen)
-        self.draw_level_text(screen)  # Draw player level
-        self.draw_aim_arrow(screen, camera_offset)  # Update to use camera offset
+        self.draw_level_text(screen)
+        self.draw_aim_arrow(screen, camera_offset)
 
     def draw_health_and_mana(self, screen):
-        """Draw the player's health and mana bars on the screen, scaling the outlines."""
-        base_bar_width = 200  # Base width for the bars
-        bar_height = 20       # Height for all bars
+        base_bar_width = 200
+        bar_height = 20
 
-        # Calculate widths based on max values
         health_bar_width = int(base_bar_width * (self.max_health / 100))
         mana_bar_width = int(base_bar_width * (self.max_mana / 100))
 
-        # Health bar
-        pygame.draw.rect(screen, (255, 0, 0), (10, 10, int(health_bar_width * (self.health / self.max_health)), bar_height))  # Red bar
-        pygame.draw.rect(screen, (255, 255, 255), (10, 10, health_bar_width, bar_height), 2)  # White border
+        pygame.draw.rect(screen, (255, 0, 0), (10, 10, int(health_bar_width * (self.health / self.max_health)), bar_height))
+        pygame.draw.rect(screen, (255, 255, 255), (10, 10, health_bar_width, bar_height), 2)
 
-        # Mana bar
-        pygame.draw.rect(screen, (0, 0, 255), (10, 40, int(mana_bar_width * (self.mana / self.max_mana)), bar_height))  # Blue bar
-        pygame.draw.rect(screen, (255, 255, 255), (10, 40, mana_bar_width, bar_height), 2)  # White border
+        pygame.draw.rect(screen, (0, 0, 255), (10, 40, int(mana_bar_width * (self.mana / self.max_mana)), bar_height))
+        pygame.draw.rect(screen, (255, 255, 255), (10, 40, mana_bar_width, bar_height), 2)
 
     def draw_xp_text(self, screen):
-        """Draw the current XP and XP needed for the next level as text."""
         xp_text = f"XP: {self.xp} / {self.xp_for_next_level}"
         xp_surface = self.font.render(xp_text, True, (255, 255, 255))
-        screen.blit(xp_surface, (10, 70))  # Position the text below the health and mana bars
+        screen.blit(xp_surface, (10, 70))
 
     def draw_level_text(self, screen):
-        """Draw the player's current level as text."""
         level_text = f"Level: {self.level}"
         level_surface = self.font.render(level_text, True, (255, 255, 255))
-        screen.blit(level_surface, (10, 100))  # Position the text below the XP text
+        screen.blit(level_surface, (10, 100))
 
     def draw_aim_arrow(self, screen, camera_offset):
-        """Draw an arrow pointing in the current aim direction, just outside the player's box."""
-        arrow_length = 30  # Length of the arrow
-        arrowhead_size = 10  # Size of the arrowhead
+        arrow_length = 30
+        arrowhead_size = 10
 
-        # Start the arrow just outside the player's box
         start_pos = (
             self.rect.centerx - camera_offset[0] + self.aim_direction.x * (self.rect.width // 2 + 2),
             self.rect.centery - camera_offset[1] + self.aim_direction.y * (self.rect.height // 2 + 2)
@@ -111,7 +104,6 @@ class Player:
             start_pos[1] + self.aim_direction.y * arrow_length
         )
 
-        # Draw arrowhead
         if self.aim_direction.length() > 0:
             arrowhead_points = [
                 (end_pos[0] + arrowhead_size * self.aim_direction.rotate(135).x, end_pos[1] + arrowhead_size * self.aim_direction.rotate(135).y),
@@ -120,17 +112,15 @@ class Player:
             pygame.draw.polygon(screen, (255, 255, 255), [end_pos] + arrowhead_points)
 
     def melee_attack(self, enemies):
-        """Perform a melee attack on enemies within range."""
         current_time = pygame.time.get_ticks()
         if current_time - self.last_attack_time >= self.attack_cooldown:
             self.last_attack_time = current_time
             melee_attack = MeleeAttack(self.rect)
-            kills = melee_attack.check_collision(enemies)  # Check for collisions and count kills
+            kills = melee_attack.check_collision(enemies)
             if kills > 0:
-                self.gain_xp(50 * kills)  # Award XP for each kill (adjust XP per kill as needed)
+                self.gain_xp(50 * kills)
 
     def ranged_attack(self, projectiles, screen_width, screen_height):
-        """Shoot a projectile in the direction the player is facing."""
         current_time = pygame.time.get_ticks()
         if current_time - self.last_attack_time >= self.attack_cooldown and self.mana >= 10:
             projectile = Projectile(
@@ -141,39 +131,34 @@ class Player:
                 screen_height
             )
             projectiles.append(projectile)
-            self.use_mana(10)  # Reduce mana
-            self.last_attack_time = current_time  # Update the last attack time
+            self.use_mana(10)
+            self.last_attack_time = current_time
 
     def gain_xp(self, amount):
-        """Increase the player's XP and handle leveling up."""
         self.xp += amount
         if self.xp >= self.xp_for_next_level:
             self.level_up()
 
     def level_up(self):
-        """Handle leveling up the player."""
         self.level += 1
-        self.xp -= self.xp_for_next_level  # Carry over extra XP
-        self.xp_for_next_level *= 1.5  # Increase the XP required for the next level
+        self.xp -= self.xp_for_next_level
+        self.xp_for_next_level *= 1.5
+        self.points += 3  # Add 3 points on level up
         print(f"Level up! You are now level {self.level}")
+        print(f"You have {self.points} points to spend.")
 
-        # Refill health and mana
         self.health = self.max_health
         self.mana = self.max_mana
         print("Health and mana refilled!")
 
     def take_damage(self, amount):
-        """Reduce the player's health by a specified amount."""
         self.health = max(0, self.health - amount)
 
     def use_mana(self, amount):
-        """Reduce the player's mana by a specified amount."""
         self.mana = max(0, self.mana - amount)
 
     def restore_health(self, amount):
-        """Increase the player's health by a specified amount."""
         self.health = min(self.max_health, self.health + amount)
 
     def restore_mana(self, amount):
-        """Increase the player's mana by a specified amount."""
         self.mana = min(self.max_mana, self.mana + amount)
