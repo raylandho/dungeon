@@ -40,8 +40,8 @@ class Dungeon:
             [(0, 0), (1, 0), (2, 0), (2, 1), (1, 1), (1, 2), (2, 2)]
         ]
 
-        # Add 0-3 smaller structures
-        num_structures = random.randint(0, 3)
+        # Add a few smaller structures
+        num_structures = random.randint(15, 20)
         for _ in range(num_structures):
             shape = random.choice(shapes)
             width = max(x for x, y in shape) + 1
@@ -53,7 +53,7 @@ class Dungeon:
                 layout[y + dy][x + dx] = '1'
 
     def add_dfs_structures(self, layout):
-        num_structures = random.randint(1, 3)
+        num_structures = random.randint(8, 12)
         for _ in range(num_structures):
             start_x = random.randint(1, self.tiles_x - 2)
             start_y = random.randint(1, self.tiles_y - 2)

@@ -4,7 +4,13 @@ Easy
 Medium
 - Add more mobs
 - Add more attacks (as level up)
+- Increase map size and add more generated terrain
 
 Hard
 - Leveling system (pathways)
 - Escape screen to view level up pathways
+
+Final Additions
+- Add artwork
+- Add soundtrack
+- Add sound effects
