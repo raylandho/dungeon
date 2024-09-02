@@ -8,4 +8,3 @@ Medium
 Hard
 - Leveling system (pathways)
 - Escape screen to view level up pathways
-- Infinite dungeon generation (with obstacles and exits)

@@ -48,8 +48,8 @@ class Player:
             direction.y = 1
 
         if direction.length() > 0:
-            direction.normalize_ip()
-            self.aim_direction = direction
+            direction.normalize_ip()  # Normalize the vector to ensure consistent speed
+            self.aim_direction = direction  # Set the aim direction
 
     def check_collision(self, new_pos, walls):
         future_rect = pygame.Rect(new_pos, (self.size, self.size))
@@ -58,12 +58,14 @@ class Player:
                 return True
         return False
 
-    def draw(self, screen):
-        screen.blit(self.image, self.rect.topleft)
+    def draw(self, screen, camera_offset):
+        screen_x = self.rect.x - camera_offset[0]
+        screen_y = self.rect.y - camera_offset[1]
+        screen.blit(self.image, (screen_x, screen_y))
         self.draw_health_and_mana(screen)
         self.draw_xp_text(screen)
         self.draw_level_text(screen)  # Draw player level
-        self.draw_aim_arrow(screen)
+        self.draw_aim_arrow(screen, camera_offset)  # Update to use camera offset
 
     def draw_health_and_mana(self, screen):
         """Draw the player's health and mana bars on the screen, scaling the outlines."""
@@ -94,15 +96,15 @@ class Player:
         level_surface = self.font.render(level_text, True, (255, 255, 255))
         screen.blit(level_surface, (10, 100))  # Position the text below the XP text
 
-    def draw_aim_arrow(self, screen):
+    def draw_aim_arrow(self, screen, camera_offset):
         """Draw an arrow pointing in the current aim direction, just outside the player's box."""
         arrow_length = 30  # Length of the arrow
         arrowhead_size = 10  # Size of the arrowhead
 
         # Start the arrow just outside the player's box
         start_pos = (
-            self.rect.centerx + self.aim_direction.x * (self.rect.width // 2 + 2),
-            self.rect.centery + self.aim_direction.y * (self.rect.height // 2 + 2)
+            self.rect.centerx - camera_offset[0] + self.aim_direction.x * (self.rect.width // 2 + 2),
+            self.rect.centery - camera_offset[1] + self.aim_direction.y * (self.rect.height // 2 + 2)
         )
         end_pos = (
             start_pos[0] + self.aim_direction.x * arrow_length,
@@ -127,11 +129,17 @@ class Player:
             if kills > 0:
                 self.gain_xp(50 * kills)  # Award XP for each kill (adjust XP per kill as needed)
 
-    def ranged_attack(self, projectiles):
+    def ranged_attack(self, projectiles, screen_width, screen_height):
         """Shoot a projectile in the direction the player is facing."""
         current_time = pygame.time.get_ticks()
         if current_time - self.last_attack_time >= self.attack_cooldown and self.mana >= 10:
-            projectile = Projectile(self.rect.centerx, self.rect.centery, self.aim_direction)
+            projectile = Projectile(
+                self.rect.centerx, 
+                self.rect.centery, 
+                self.aim_direction, 
+                screen_width, 
+                screen_height
+            )
             projectiles.append(projectile)
             self.use_mana(10)  # Reduce mana
             self.last_attack_time = current_time  # Update the last attack time
