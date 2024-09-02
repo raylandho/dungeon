@@ -77,7 +77,7 @@ def main():
             continue
 
         keys = pygame.key.get_pressed()
-        player.handle_movement(keys, dungeon.get_walls())
+        player.handle_movement(keys, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y)
         player.update_aim_direction(keys)
 
         camera_offset_x = player.rect.centerx - SCREEN_WIDTH // 2

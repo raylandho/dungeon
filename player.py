@@ -1,5 +1,5 @@
 import pygame
-from settings import PLAYER_SIZE
+from settings import PLAYER_SIZE, TILE_SIZE
 from projectile import Projectile, MeleeAttack
 
 class Player:
@@ -21,21 +21,36 @@ class Player:
         self.aim_direction = pygame.math.Vector2(1, 0)
         self.font = pygame.font.SysFont(None, 24)
 
-    def handle_movement(self, keys, walls):
-        new_pos = self.rect.topleft
+    def handle_movement(self, keys, walls, dungeon_width, dungeon_height):
         movement_speed = 3
+        direction = pygame.math.Vector2(0, 0)
 
         if keys[pygame.K_LEFT]:
-            new_pos = (new_pos[0] - movement_speed, new_pos[1])
+            direction.x = -1
         if keys[pygame.K_RIGHT]:
-            new_pos = (new_pos[0] + movement_speed, new_pos[1])
+            direction.x = 1
         if keys[pygame.K_UP]:
-            new_pos = (new_pos[0], new_pos[1] - movement_speed)
+            direction.y = -1
         if keys[pygame.K_DOWN]:
-            new_pos = (new_pos[0], new_pos[1] + movement_speed)
+            direction.y = 1
 
-        if not self.check_collision(new_pos, walls):
-            self.rect.topleft = new_pos
+        # Normalize the direction vector to ensure consistent speed in all directions
+        if direction.length() > 0:
+            direction.normalize_ip()
+
+        # Calculate new position
+        new_x = self.rect.x + direction.x * movement_speed
+        new_y = self.rect.y + direction.y * movement_speed
+
+        # Check map boundaries
+        if new_x < 0 or new_x + self.size > dungeon_width * TILE_SIZE:
+            new_x = self.rect.x  # Prevent horizontal movement off the map
+        if new_y < 0 or new_y + self.size > dungeon_height * TILE_SIZE:
+            new_y = self.rect.y  # Prevent vertical movement off the map
+
+        # Check collisions
+        if not self.check_collision((new_x, new_y), walls):
+            self.rect.topleft = (new_x, new_y)
 
     def update_aim_direction(self, keys):
         direction = pygame.math.Vector2(0, 0)
@@ -58,6 +73,15 @@ class Player:
             if future_rect.colliderect(wall):
                 return True
         return False
+
+    def draw(self, screen, camera_offset):
+        screen_x = self.rect.x - camera_offset[0]
+        screen_y = self.rect.y - camera_offset[1]
+        screen.blit(self.image, (screen_x, screen_y))
+        self.draw_health_and_mana(screen)
+        self.draw_xp_text(screen)
+        self.draw_level_text(screen)
+        self.draw_aim_arrow(screen, camera_offset)
 
     def draw(self, screen, camera_offset):
         screen_x = self.rect.x - camera_offset[0]
