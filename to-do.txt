@@ -3,6 +3,7 @@ Easy
 - No teleporting into walls
 
 Medium
+- Mobs should not be able to overlap (fully)
 - Add more mobs
 - Add more attacks (as level up)
 - Increase map size and add more generated terrain

@@ -1,4 +1,5 @@
 import pygame
+import random
 from settings import TILE_SIZE, PLAYER_SIZE
 
 class Enemy:
@@ -12,6 +13,13 @@ class Enemy:
         self.is_flashing = False
         self.flash_duration = 100  # Duration of the flash effect in milliseconds
         self.original_color = (255, 0, 0)
+    
+    def get_valid_spawn_position(self, dungeon):
+        while True:
+            x = random.randint(0, dungeon.tiles_x - 1) * TILE_SIZE
+            y = random.randint(0, dungeon.tiles_y - 1) * TILE_SIZE
+            if dungeon.layout[y // TILE_SIZE][x // TILE_SIZE] != 1:  # Assuming 1 represents a wall in dungeon layout
+                return (x, y)
 
     def move_towards_player(self, player_rect, walls):
         """Simple AI to move the enemy towards the player."""

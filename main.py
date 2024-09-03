@@ -37,7 +37,9 @@ def main():
     
     dungeon.clear_spawn_area(dungeon.layout, player_start_x // TILE_SIZE, player_start_y // TILE_SIZE)
 
-    enemies = [Enemy(200, 200), Enemy(100, 100)]
+    # Initialize enemies with valid spawn positions
+    enemies = [Enemy(*dungeon.get_random_open_position()) for _ in range(5)]
+
     projectiles = []
 
     inventory = Inventory(SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -60,7 +62,7 @@ def main():
                     player.ranged_attack(projectiles, dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
                 if event.key == pygame.K_i:
                     inventory.toggle()
-                if event.key == pygame.K_t:  # Assuming 'T' is the key to teleport
+                if event.key == pygame.K_t and not inventory.is_open:  # Assuming 'T' is the key to teleport
                     player.teleport(screen, camera_offset, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y, dungeon, SCREEN_WIDTH, SCREEN_HEIGHT, enemies, projectiles)
 
         if inventory.is_open:
