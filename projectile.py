@@ -16,9 +16,21 @@ class Projectile:
         self.screen_width = screen_width  # Store screen width
         self.screen_height = screen_height  # Store screen height
 
-    def move(self):
+    def move(self, walls):
         self.rect.x += self.direction.x * self.speed
         self.rect.y += self.direction.y * self.speed
+
+        # Check for collision with walls
+        if self.check_collision(walls):
+            return False  # Return False if collision occurs
+
+        return True  # Return True if no collision occurs
+
+    def check_collision(self, walls):
+        for wall in walls:
+            if self.rect.colliderect(wall):
+                return True
+        return False
 
     def draw(self, screen):
         screen.blit(self.image, self.rect.topleft)

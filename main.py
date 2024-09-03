@@ -95,8 +95,9 @@ def main():
         dungeon.draw(screen, camera_offset)
 
         for projectile in projectiles[:]:
-            projectile.move()
-            if projectile.is_off_screen():
+            if not projectile.move(dungeon.get_walls()):  # Pass walls to move method
+                projectiles.remove(projectile)
+            elif projectile.is_off_screen():
                 projectiles.remove(projectile)
             else:
                 projectile_screen_x = projectile.rect.x - camera_offset_x

@@ -1,5 +1,6 @@
 Easy
 - Display Level Up on screen
+- No teleporting into walls
 
 Medium
 - Add more mobs
@@ -8,7 +9,7 @@ Medium
 
 Hard
 - Leveling system (pathways)
-- Escape screen to view level up pathways
+- Add leveling pathways to the inventory
 
 Final Additions
 - Add artwork
@@ -19,4 +20,4 @@ Controls:
 Ranged attack: r
 Melee attack: space
 Inventory: i
-Dash: Lshift
+Teleport: t
