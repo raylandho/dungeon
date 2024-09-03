@@ -60,6 +60,8 @@ def main():
                     player.ranged_attack(projectiles, dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
                 if event.key == pygame.K_i:
                     inventory.toggle()
+                if event.key == pygame.K_t:  # Assuming 'T' is the key to teleport
+                    player.teleport(screen, camera_offset, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y, dungeon, SCREEN_WIDTH, SCREEN_HEIGHT, enemies, projectiles)
 
         if inventory.is_open:
             inventory.update_points(player.points)  # Update inventory with player's points

@@ -18,6 +18,8 @@ class Player:
         self.points = 0  # Points for leveling up
         self.attack_cooldown = 500  # Cooldown for attacks
         self.last_attack_time = pygame.time.get_ticks()
+        self.teleport_cooldown = 2000  # Cooldown for teleporting (in milliseconds)
+        self.last_teleport_time = pygame.time.get_ticks()  # Time of last teleport
         self.aim_direction = pygame.math.Vector2(1, 0)
         self.font = pygame.font.SysFont(None, 24)
 
@@ -52,6 +54,61 @@ class Player:
         if not self.check_collision((new_x, new_y), walls):
             self.rect.topleft = (new_x, new_y)
 
+    def teleport(self, screen, camera_offset, walls, dungeon_width, dungeon_height, dungeon, screen_width, screen_height, enemies, projectiles):
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_teleport_time < self.teleport_cooldown:
+            return  # Teleport is on cooldown
+
+        teleport_distance = TILE_SIZE * 3  # 3 tiles
+        teleport_x = self.rect.x + self.aim_direction.x * teleport_distance
+        teleport_y = self.rect.y + self.aim_direction.y * teleport_distance
+
+        # Ensure teleport doesn't move the player off the map
+        if teleport_x < 0 or teleport_x + self.size > dungeon_width * TILE_SIZE:
+            teleport_x = self.rect.x
+        if teleport_y < 0 or teleport_y + self.size > dungeon_height * TILE_SIZE:
+            teleport_y = self.rect.y
+
+        # Temporarily set the player's position to the target location
+        self.rect.topleft = (teleport_x, teleport_y)
+
+        # Check if the new position collides with any walls
+        if not self.check_collision(self.rect.topleft, walls):
+            # Update camera position to track player
+            for _ in range(10):  # Increase iterations to make the camera smoothly follow
+                camera_offset_x = self.rect.centerx - screen_width // 2
+                camera_offset_y = self.rect.centery - screen_height // 2
+
+                # Ensure the camera doesn't show beyond the map edges
+                camera_offset_x = max(0, min(camera_offset_x, dungeon_width * TILE_SIZE - screen_width))
+                camera_offset_y = max(0, min(camera_offset_y, dungeon_height * TILE_SIZE - screen_height))
+
+                camera_offset = (camera_offset_x, camera_offset_y)
+
+                # Redraw the dungeon, player, projectiles, and enemies with updated camera offset
+                screen.fill((0, 0, 0))  # Clear screen with black
+                dungeon.draw(screen, camera_offset)
+
+                # Draw each projectile
+                for projectile in projectiles:
+                    projectile_screen_x = projectile.rect.x - camera_offset_x
+                    projectile_screen_y = projectile.rect.y - camera_offset_y
+                    screen.blit(projectile.image, (projectile_screen_x, projectile_screen_y))
+
+                # Draw each enemy
+                for enemy in enemies:
+                    enemy.draw(screen, camera_offset)
+
+                self.draw(screen, camera_offset)
+                pygame.display.flip()
+                pygame.time.delay(30)  # Adjust delay for smoother camera tracking
+
+            # Update the last teleport time
+            self.last_teleport_time = current_time
+        else:
+            # If collision detected, reset to the original position
+            self.rect.topleft = (self.rect.x, self.rect.y)
+        
     def update_aim_direction(self, keys):
         direction = pygame.math.Vector2(0, 0)
         if keys[pygame.K_LEFT]:
@@ -73,15 +130,6 @@ class Player:
             if future_rect.colliderect(wall):
                 return True
         return False
-
-    def draw(self, screen, camera_offset):
-        screen_x = self.rect.x - camera_offset[0]
-        screen_y = self.rect.y - camera_offset[1]
-        screen.blit(self.image, (screen_x, screen_y))
-        self.draw_health_and_mana(screen)
-        self.draw_xp_text(screen)
-        self.draw_level_text(screen)
-        self.draw_aim_arrow(screen, camera_offset)
 
     def draw(self, screen, camera_offset):
         screen_x = self.rect.x - camera_offset[0]

@@ -118,8 +118,9 @@ class Dungeon:
 
                 if tile == "1":
                     screen.blit(self.tile_image, (screen_x, screen_y))
-                
+                '''
                 # Render the tile's value (0 or 1) on top of the tile
                 text_surface = self.font.render(tile, True, (255, 255, 255))
                 text_rect = text_surface.get_rect(center=(screen_x + TILE_SIZE // 2, screen_y + TILE_SIZE // 2))
                 screen.blit(text_surface, text_rect)
+                '''

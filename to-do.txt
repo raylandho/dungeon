@@ -14,3 +14,9 @@ Final Additions
 - Add artwork
 - Add soundtrack
 - Add sound effects
+
+Controls:
+Ranged attack: r
+Melee attack: space
+Inventory: i
+Dash: Lshift
