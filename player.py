@@ -63,52 +63,61 @@ class Player:
         teleport_x = self.rect.x + self.aim_direction.x * teleport_distance
         teleport_y = self.rect.y + self.aim_direction.y * teleport_distance
 
+        print(f"Attempting to teleport to position ({teleport_x}, {teleport_y})")
+
         # Ensure teleport doesn't move the player off the map
         if teleport_x < 0 or teleport_x + self.size > dungeon_width * TILE_SIZE:
-            teleport_x = self.rect.x
+            print("Invalid teleport position (off the map) - X axis")
+            return  # Invalid teleport position, abort teleport
         if teleport_y < 0 or teleport_y + self.size > dungeon_height * TILE_SIZE:
-            teleport_y = self.rect.y
+            print("Invalid teleport position (off the map) - Y axis")
+            return  # Invalid teleport position, abort teleport
 
-        # Temporarily set the player's position to the target location
+        # Save the original position in case the teleport is invalid
+        original_position = self.rect.topleft
         self.rect.topleft = (teleport_x, teleport_y)
 
-        # Check if the new position collides with any walls
-        if not self.check_collision(self.rect.topleft, walls):
-            # Update camera position to track player
-            for _ in range(10):  # Increase iterations to make the camera smoothly follow
-                camera_offset_x = self.rect.centerx - screen_width // 2
-                camera_offset_y = self.rect.centery - screen_height // 2
+        # Check for collisions at the new position
+        if self.check_collision(self.rect.topleft, walls):
+            print("Collision detected at target position, resetting to original position")
+            self.rect.topleft = original_position
+            return
 
-                # Ensure the camera doesn't show beyond the map edges
-                camera_offset_x = max(0, min(camera_offset_x, dungeon_width * TILE_SIZE - screen_width))
-                camera_offset_y = max(0, min(camera_offset_y, dungeon_height * TILE_SIZE - screen_height))
+        print(f"Teleport successful to ({teleport_x}, {teleport_y})")
 
-                camera_offset = (camera_offset_x, camera_offset_y)
+        # Update camera position to track player
+        for _ in range(10):  # Increase iterations to make the camera smoothly follow
+            camera_offset_x = self.rect.centerx - screen_width // 2
+            camera_offset_y = self.rect.centery - screen_height // 2
 
-                # Redraw the dungeon, player, projectiles, and enemies with updated camera offset
-                screen.fill((0, 0, 0))  # Clear screen with black
-                dungeon.draw(screen, camera_offset)
+            # Ensure the camera doesn't show beyond the map edges
+            camera_offset_x = max(0, min(camera_offset_x, dungeon_width * TILE_SIZE - screen_width))
+            camera_offset_y = max(0, min(camera_offset_y, dungeon_height * TILE_SIZE - screen_height))
 
-                # Draw each projectile
-                for projectile in projectiles:
-                    projectile_screen_x = projectile.rect.x - camera_offset_x
-                    projectile_screen_y = projectile.rect.y - camera_offset_y
-                    screen.blit(projectile.image, (projectile_screen_x, projectile_screen_y))
+            camera_offset = (camera_offset_x, camera_offset_y)
 
-                # Draw each enemy
-                for enemy in enemies:
-                    enemy.draw(screen, camera_offset)
+            # Redraw the dungeon, player, projectiles, and enemies with updated camera offset
+            screen.fill((0, 0, 0))  # Clear screen with black
+            dungeon.draw(screen, camera_offset)
 
-                self.draw(screen, camera_offset)
-                pygame.display.flip()
-                pygame.time.delay(30)  # Adjust delay for smoother camera tracking
+            # Draw each projectile
+            for projectile in projectiles:
+                projectile_screen_x = projectile.rect.x - camera_offset_x
+                projectile_screen_y = projectile.rect.y - camera_offset_y
+                screen.blit(projectile.image, (projectile_screen_x, projectile_screen_y))
 
-            # Update the last teleport time
-            self.last_teleport_time = current_time
-        else:
-            # If collision detected, reset to the original position
-            self.rect.topleft = (self.rect.x, self.rect.y)
-        
+            # Draw each enemy
+            for enemy in enemies:
+                enemy.draw(screen, camera_offset)
+
+            self.draw(screen, camera_offset)
+            pygame.display.flip()
+            pygame.time.delay(30)  # Adjust delay for smoother camera tracking
+
+        # Update the last teleport time
+        self.last_teleport_time = current_time
+        print("Teleport complete, cooldown started")
+
     def update_aim_direction(self, keys):
         direction = pygame.math.Vector2(0, 0)
         if keys[pygame.K_LEFT]:

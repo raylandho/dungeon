@@ -1,6 +1,5 @@
 Easy
 - Display Level Up on screen
-- No teleporting into walls
 
 Medium
 - Mobs should not be able to overlap (fully)
