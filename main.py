@@ -69,19 +69,13 @@ def main():
                         inventory.move_selection_up()
                     elif event.key == pygame.K_DOWN:
                         inventory.move_selection_down()
-                    elif event.key == pygame.K_RETURN:  # Unlock selected attack
-                        inventory.unlock_attack()
+                    elif event.key == pygame.K_RETURN:  # Unlock selected attack or upgrade
+                        inventory.unlock_attack(player)
 
         if inventory.is_open:
-            inventory.update_points(player.points)  # Update inventory with player's points
-            inventory.draw(screen)
+            inventory.draw(screen, player)  # Pass the player to access points directly
             continue
         
-        if inventory.is_open:
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_f:  # Example: 'F' key to unlock Fireball
-                    inventory.unlock_attack("Fireball Attack")
-
         if not game_started:
             screen.fill((0, 0, 0))
             font = pygame.font.SysFont(None, 74)

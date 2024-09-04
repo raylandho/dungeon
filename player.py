@@ -116,7 +116,7 @@ class Player:
 
         # Update the last teleport time
         self.last_teleport_time = current_time
-        print("Teleport complete, cooldown started")
+        #print("Teleport complete, cooldown started")
 
     def update_aim_direction(self, keys):
         direction = pygame.math.Vector2(0, 0)
@@ -232,6 +232,16 @@ class Player:
         self.mana = self.max_mana
         print("Health and mana refilled!")
 
+    def increase_max_health(self, amount):
+        self.max_health += amount
+        self.health = self.max_health  # Restore health to new max
+        print(f"Max health increased to {self.max_health}!")
+
+    def increase_max_mana(self, amount):
+        self.max_mana += amount
+        self.mana = self.max_mana  # Restore mana to new max
+        print(f"Max mana increased to {self.max_mana}!")
+        
     def take_damage(self, amount):
         self.health = max(0, self.health - amount)
 
