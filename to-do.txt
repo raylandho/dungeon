@@ -5,16 +5,15 @@ Medium
 - Mobs should not be able to overlap (fully)
 - Add more mobs
 - Add more attacks (as level up)
-- Increase map size and add more generated terrain
 
 Hard
-- Leveling system (pathways)
 - Add leveling pathways to the inventory
 
 Final Additions
 - Add artwork
 - Add soundtrack
 - Add sound effects
+- Increase map size and add more generated terrain
 
 Controls:
 Ranged attack: r

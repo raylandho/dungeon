@@ -64,11 +64,23 @@ def main():
                     inventory.toggle()
                 if event.key == pygame.K_t and not inventory.is_open:  # Assuming 'T' is the key to teleport
                     player.teleport(screen, camera_offset, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y, dungeon, SCREEN_WIDTH, SCREEN_HEIGHT, enemies, projectiles)
+                if inventory.is_open:
+                    if event.key == pygame.K_UP:
+                        inventory.move_selection_up()
+                    elif event.key == pygame.K_DOWN:
+                        inventory.move_selection_down()
+                    elif event.key == pygame.K_RETURN:  # Unlock selected attack
+                        inventory.unlock_attack()
 
         if inventory.is_open:
             inventory.update_points(player.points)  # Update inventory with player's points
             inventory.draw(screen)
             continue
+        
+        if inventory.is_open:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_f:  # Example: 'F' key to unlock Fireball
+                    inventory.unlock_attack("Fireball Attack")
 
         if not game_started:
             screen.fill((0, 0, 0))

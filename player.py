@@ -63,14 +63,14 @@ class Player:
         teleport_x = self.rect.x + self.aim_direction.x * teleport_distance
         teleport_y = self.rect.y + self.aim_direction.y * teleport_distance
 
-        print(f"Attempting to teleport to position ({teleport_x}, {teleport_y})")
+        #print(f"Attempting to teleport to position ({teleport_x}, {teleport_y})")
 
         # Ensure teleport doesn't move the player off the map
         if teleport_x < 0 or teleport_x + self.size > dungeon_width * TILE_SIZE:
-            print("Invalid teleport position (off the map) - X axis")
+            #print("Invalid teleport position (off the map) - X axis")
             return  # Invalid teleport position, abort teleport
         if teleport_y < 0 or teleport_y + self.size > dungeon_height * TILE_SIZE:
-            print("Invalid teleport position (off the map) - Y axis")
+            #print("Invalid teleport position (off the map) - Y axis")
             return  # Invalid teleport position, abort teleport
 
         # Save the original position in case the teleport is invalid
@@ -79,11 +79,11 @@ class Player:
 
         # Check for collisions at the new position
         if self.check_collision(self.rect.topleft, walls):
-            print("Collision detected at target position, resetting to original position")
+            #print("Collision detected at target position, resetting to original position")
             self.rect.topleft = original_position
             return
 
-        print(f"Teleport successful to ({teleport_x}, {teleport_y})")
+        #print(f"Teleport successful to ({teleport_x}, {teleport_y})")
 
         # Update camera position to track player
         for _ in range(10):  # Increase iterations to make the camera smoothly follow
