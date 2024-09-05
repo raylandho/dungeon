@@ -37,6 +37,49 @@ class Projectile:
 
     def is_off_screen(self):
         return not (0 <= self.rect.x <= self.screen_width and 0 <= self.rect.y <= self.screen_height)
+    
+class Fireball(Projectile):
+    def __init__(self, x, y, direction, screen_width, screen_height, speed=7, size=None):
+        if size is None:
+            size = PLAYER_SIZE * 2.5  # Default size for the fireball
+        self.size = size
+
+        # Calculate the fireball's initial position directly in front of the player
+        offset_x = direction.x * (PLAYER_SIZE // 2 + self.size // 2)
+        offset_y = direction.y * (PLAYER_SIZE // 2 + self.size // 2)
+
+        # Initialize the fireball's position
+        fireball_x = x + offset_x
+        fireball_y = y + offset_y
+
+        super().__init__(fireball_x, fireball_y, direction, screen_width, screen_height, speed, self.size)
+
+        # Set up the fireball's appearance
+        self.image = pygame.Surface((self.size, self.size), pygame.SRCALPHA)  # Use SRCALPHA for transparency
+        self.image.fill((0, 0, 0, 0))  # Fully transparent background
+        pygame.draw.circle(self.image, (255, 69, 0), (self.size // 2, self.size // 2), self.size // 2)  # Draw a fireball (orange circle)
+        self.damage = 100  # Fireball deals more damage
+        self.mana_cost = 30  # Fireball has a higher mana cost
+
+    def move(self, walls, enemies, player):
+        """Move the fireball and check for collisions with walls and enemies."""
+        self.rect.x += self.direction.x * self.speed
+        self.rect.y += self.direction.y * self.speed
+
+        # Check for collision with walls
+        if self.check_collision(walls):
+            return False  # Return False to indicate the fireball should be removed
+
+        # Check for collision with enemies and deal damage
+        for enemy in enemies[:]:
+            if self.rect.colliderect(enemy.rect):
+                enemy.take_damage(self.damage)
+                if enemy.health <= 0:  # Ensure enemy is removed if health is 0 or less
+                    enemies.remove(enemy)
+                    #print("Enemy killed by fireball.")
+                    player.gain_xp(50)  # Ensure XP is granted for killing the enemy
+
+        return True  # Fireball keeps moving until it hits a wall
 
 class MeleeAttack:
     def __init__(self, player_rect, attack_range=50, damage=50):

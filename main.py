@@ -2,7 +2,7 @@ import pygame
 import sys
 from settings import TILE_SIZE, FPS
 from player import Player
-from projectile import Projectile
+from projectile import Projectile, Fireball
 from enemy import Enemy
 from dungeon import Dungeon
 from inventory import Inventory  # Import the Inventory class
@@ -60,6 +60,8 @@ def main():
                     player.melee_attack(enemies)
                 if event.key == pygame.K_r and not inventory.is_open:
                     player.ranged_attack(projectiles, dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
+                if event.key == pygame.K_f and not inventory.is_open and player.fireball_unlocked:  # Check if fireball is unlocked
+                    player.fireball_attack(projectiles, dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
                 if event.key == pygame.K_i:
                     inventory.toggle()
                 if event.key == pygame.K_t and not inventory.is_open:  # Assuming 'T' is the key to teleport
@@ -103,22 +105,28 @@ def main():
         dungeon.draw(screen, camera_offset)
 
         for projectile in projectiles[:]:
-            if not projectile.move(dungeon.get_walls()):  # Pass walls to move method
-                projectiles.remove(projectile)
-            elif projectile.is_off_screen():
+            if isinstance(projectile, Fireball):
+                if not projectile.move(dungeon.get_walls(), enemies, player):  # Fireball move with walls and enemies
+                    projectiles.remove(projectile)
+            else:
+                if not projectile.move(dungeon.get_walls()):  # Projectile move with only walls
+                    projectiles.remove(projectile)
+                else:
+                    # Handle enemy collision for non-Fireball projectiles
+                    for enemy in enemies[:]:
+                        if projectile.rect.colliderect(enemy.rect):
+                            if enemy.take_damage(projectile.damage):
+                                enemies.remove(enemy)
+                                player.gain_xp(50)
+                            projectiles.remove(projectile)
+                            break
+
+            if projectile.is_off_screen():
                 projectiles.remove(projectile)
             else:
                 projectile_screen_x = projectile.rect.x - camera_offset_x
                 projectile_screen_y = projectile.rect.y - camera_offset_y
                 screen.blit(projectile.image, (projectile_screen_x, projectile_screen_y))
-
-                for enemy in enemies[:]:
-                    if projectile.rect.colliderect(enemy.rect):
-                        if enemy.take_damage(projectile.damage):
-                            enemies.remove(enemy)
-                            player.gain_xp(50)
-                        projectiles.remove(projectile)
-                        break
 
         for enemy in enemies:
             enemy.move_towards_player(player.rect, dungeon.get_walls())

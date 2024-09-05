@@ -50,7 +50,7 @@ class Enemy:
         """Reduce the enemy's health by a specified amount and trigger the flash effect."""
         self.health = max(0, self.health - amount)
         self.start_flash()
-
+        print(f"Enemy took {amount} damage, remaining health: {self.health}")
         if self.health == 0:
             return True  # Return True if the enemy dies
         return False

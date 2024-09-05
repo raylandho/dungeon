@@ -1,6 +1,6 @@
 import pygame
 from settings import PLAYER_SIZE, TILE_SIZE
-from projectile import Projectile, MeleeAttack
+from projectile import Projectile, MeleeAttack, Fireball
 
 class Player:
     def __init__(self, x, y):
@@ -22,6 +22,7 @@ class Player:
         self.last_teleport_time = pygame.time.get_ticks()  # Time of last teleport
         self.aim_direction = pygame.math.Vector2(1, 0)
         self.font = pygame.font.SysFont(None, 24)
+        self.fireball_unlocked = False
 
     def handle_movement(self, keys, walls, dungeon_width, dungeon_height):
         movement_speed = 3
@@ -214,6 +215,25 @@ class Player:
             projectiles.append(projectile)
             self.use_mana(10)
             self.last_attack_time = current_time
+    
+    def fireball_attack(self, projectiles, screen_width, screen_height):
+        current_time = pygame.time.get_ticks()
+        fireball_mana_cost = 20  # Adjust mana cost for the fireball
+
+        if current_time - self.last_attack_time >= self.attack_cooldown and self.mana >= fireball_mana_cost:
+            fireball = Fireball(
+                self.rect.centerx, 
+                self.rect.centery, 
+                self.aim_direction, 
+                screen_width, 
+                screen_height
+            )
+            projectiles.append(fireball)
+            self.use_mana(fireball_mana_cost)
+            self.last_attack_time = current_time
+    
+    def unlock_fireball(self):
+        self.fireball_unlocked = True
 
     def gain_xp(self, amount):
         self.xp += amount
