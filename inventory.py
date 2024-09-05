@@ -13,14 +13,14 @@ class Inventory:
         self.unlocked_attacks = {
             "Projectile Attack": True,
             "Melee Attack": True,
-            "Fireball Attack": False,
+            "Fireball": False,
             "Teleport Attack": False,
             "Lightning Strike": False,
         }
         self.attack_costs = {
             "Projectile Attack": 0,
             "Melee Attack": 0,
-            "Fireball Attack": 3,
+            "Fireball": 3,
             "Teleport Attack": 5,
             "Lightning Strike": 4,
             "Increase Max Health": 1,
@@ -88,8 +88,7 @@ class Inventory:
                     self.unlocked_attacks[selected_attack] = True
                     player.points -= cost
                     print(f"{selected_attack} unlocked!")
-                    # Check if the selected attack is "Fireball Attack" and unlock it in the player
-                    if selected_attack == "Fireball Attack":
+                    if selected_attack == "Fireball":
                         player.unlock_fireball()
                 else:
                     print("Not enough points to unlock this attack.")
