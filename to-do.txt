@@ -1,5 +1,6 @@
 Easy
 - Display Level Up on screen
+- Add health / mana should not refill health / mana
 
 Medium
 - Mobs should not be able to overlap (fully)
@@ -7,16 +8,19 @@ Medium
 - Add more attacks (as level up)
 
 Hard
-- Add leveling pathways to the inventory
-
-Final Additions
+- Mobs should be able to hit the player
 - Add artwork
 - Add soundtrack
 - Add sound effects
+- Add levels + final boss or infinite increasing dungeon
+
+Final Additions
 - Increase map size and add more generated terrain
 
 Controls:
 Ranged attack: r
 Melee attack: space
-Inventory: i
+Inventory: i, arrow keys + enter
 Teleport: t
+Fireball: f
+Lightning Strike: l -> enter

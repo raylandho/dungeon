@@ -46,30 +46,19 @@ def main():
 
     game_started = False
     lightning_in_progress = False
+    lightning_move_cooldown = 35  # Cooldown in milliseconds (adjust as needed)
+    last_lightning_move_time = 0
 
     running = True
     while running:
+        current_time = pygame.time.get_ticks()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
-            # Handle input for lightning strike targeting
-            if lightning_in_progress:
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_UP:
-                        player.move_lightning_strike_target("up")
-                    elif event.key == pygame.K_DOWN:
-                        player.move_lightning_strike_target("down")
-                    elif event.key == pygame.K_LEFT:
-                        player.move_lightning_strike_target("left")
-                    elif event.key == pygame.K_RIGHT:
-                        player.move_lightning_strike_target("right")
-                    elif event.key == pygame.K_RETURN:  # Confirm lightning strike
-                        player.confirm_lightning_strike(enemies)
-                        lightning_in_progress = False  # Exit lightning strike mode
-
             # Handle normal input when not in lightning strike mode
-            else:
+            if not lightning_in_progress:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F11:
                         screen, current_mode = toggle_fullscreen(current_mode, screen, SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -88,6 +77,7 @@ def main():
                     if event.key == pygame.K_l and not inventory.is_open and player.lightning_unlocked:  # 'L' for Lightning Strike mode
                         player.start_lightning_strike(dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
                         lightning_in_progress = True
+                        last_lightning_move_time = current_time  # Reset cooldown
 
                     if inventory.is_open:
                         if event.key == pygame.K_UP:
@@ -96,6 +86,26 @@ def main():
                             inventory.move_selection_down()
                         elif event.key == pygame.K_RETURN:  # Unlock attack or upgrade
                             inventory.unlock_attack(player)
+
+        # Handle lightning strike input: continuous key presses with cooldown
+        if lightning_in_progress:
+            keys = pygame.key.get_pressed()
+            if current_time - last_lightning_move_time >= lightning_move_cooldown:  # Enforce cooldown
+                if keys[pygame.K_LEFT]:
+                    player.move_lightning_strike_target("left")
+                    last_lightning_move_time = current_time  # Reset cooldown
+                if keys[pygame.K_RIGHT]:
+                    player.move_lightning_strike_target("right")
+                    last_lightning_move_time = current_time
+                if keys[pygame.K_UP]:
+                    player.move_lightning_strike_target("up")
+                    last_lightning_move_time = current_time
+                if keys[pygame.K_DOWN]:
+                    player.move_lightning_strike_target("down")
+                    last_lightning_move_time = current_time
+                if keys[pygame.K_RETURN]:  # Confirm lightning strike
+                    player.confirm_lightning_strike(enemies)
+                    lightning_in_progress = False  # Exit lightning strike mode
 
         if inventory.is_open:
             inventory.draw(screen, player)  # Pass the player to access points directly
