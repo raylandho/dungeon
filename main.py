@@ -77,33 +77,33 @@ def main():
                         screen, current_mode = toggle_fullscreen(current_mode, screen, SCREEN_WIDTH, SCREEN_HEIGHT)
                     if event.key == pygame.K_SPACE and not game_started:
                         game_started = True
-                    if event.key == pygame.K_SPACE and not inventory.is_open:
+                    if event.key == inventory.keybindings["Melee Attack"] and not inventory.is_open:
                         player.melee_attack(enemies)
-                    if event.key == pygame.K_r and not inventory.is_open:
+                    if event.key == inventory.keybindings["Ranged Attack"] and not inventory.is_open:
                         player.ranged_attack(projectiles, dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
-                    if event.key == pygame.K_f and not inventory.is_open and player.fireball_unlocked:  # Fireball check
+                    if event.key == inventory.keybindings["Fireball"] and not inventory.is_open and player.fireball_unlocked:
                         player.fireball_attack(projectiles, dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
                     if event.key == pygame.K_i:
                         inventory.toggle()
-                    if event.key == pygame.K_t and not inventory.is_open:
+                    if event.key == inventory.keybindings["Teleport"] and not inventory.is_open:
                         if player.teleport_attack_unlocked:
-                            # Use upgraded teleport attack if unlocked
                             player.teleport_attack(screen, camera_offset, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y, dungeon, SCREEN_WIDTH, SCREEN_HEIGHT, enemies, projectiles)
                         else:
-                            # Use normal teleport
                             player.teleport(screen, camera_offset, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y, dungeon, SCREEN_WIDTH, SCREEN_HEIGHT, enemies, projectiles)
-                    if event.key == pygame.K_l and not inventory.is_open and player.lightning_unlocked:  # 'L' for Lightning Strike mode
+                    if event.key == inventory.keybindings["Lightning Strike"] and not inventory.is_open and player.lightning_unlocked:
                         player.start_lightning_strike(dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
                         lightning_in_progress = True
                         last_lightning_move_time = current_time  # Reset cooldown
 
                     if inventory.is_open:
-                        if event.key == pygame.K_UP:
+                        if inventory.rebinding_mode:
+                            inventory.process_keybinding(event)
+                        elif event.key == pygame.K_UP:
                             inventory.move_selection_up()
                         elif event.key == pygame.K_DOWN:
                             inventory.move_selection_down()
-                        elif event.key == pygame.K_RETURN:  # Unlock attack or upgrade
-                            inventory.unlock_attack(player)
+                        elif event.key == pygame.K_RETURN:
+                            inventory.select(player)
 
         # Handle lightning strike input: continuous key presses with cooldown
         if lightning_in_progress:

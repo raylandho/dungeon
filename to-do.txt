@@ -4,7 +4,6 @@ Easy
 
 Medium
 - Add more mobs
-- Add more attacks (as level up)
 - Rebind keys in inventory mode
 
 Hard
