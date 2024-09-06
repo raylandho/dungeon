@@ -1,5 +1,5 @@
 import pygame
-from settings import PLAYER_SIZE
+from settings import PLAYER_SIZE, TILE_SIZE
 
 class Projectile:
     def __init__(self, x, y, direction, screen_width, screen_height, speed=5, size=None):
@@ -80,6 +80,50 @@ class Fireball(Projectile):
                     player.gain_xp(50)  # Ensure XP is granted for killing the enemy
 
         return True  # Fireball keeps moving until it hits a wall
+
+class LightningStrike:
+    def __init__(self, player_x, player_y, map_width, map_height, strike_radius=TILE_SIZE * 2):
+        self.strike_radius = strike_radius  # The size of the lightning strike circle
+        self.color = (173, 216, 230)  # Light blue color for the lightning strike
+        self.map_width = map_width
+        self.map_height = map_height
+        self.target_position = pygame.Vector2(player_x, player_y)  # Start circle at the player's position
+
+    def move(self, direction):
+        """Move the lightning strike targeting circle based on user input."""
+        if direction == "left" and self.target_position.x > self.strike_radius:
+            self.target_position.x -= TILE_SIZE
+        if direction == "right" and self.target_position.x < self.map_width - self.strike_radius:
+            self.target_position.x += TILE_SIZE
+        if direction == "up" and self.target_position.y > self.strike_radius:
+            self.target_position.y -= TILE_SIZE
+        if direction == "down" and self.target_position.y < self.map_height - self.strike_radius:
+            self.target_position.y += TILE_SIZE
+
+    def draw(self, screen, camera_offset):
+        """Draw the lightning strike targeting circle on the screen."""
+        screen_x = self.target_position.x - camera_offset[0]
+        screen_y = self.target_position.y - camera_offset[1]
+        pygame.draw.circle(screen, self.color, (int(screen_x), int(screen_y)), self.strike_radius, 3)
+
+    def check_enemies_in_range(self, enemies, player):
+        """Damage enemies within the lightning strike circle, reward player XP, and remove dead enemies."""
+        struck_enemies = 0
+        enemies_to_remove = []  # Track enemies that should be removed
+        for enemy in enemies:
+            enemy_distance = self.target_position.distance_to(enemy.rect.center)
+            if enemy_distance <= self.strike_radius:
+                if enemy.take_damage(75):  # Lightning does 75 damage
+                    print(f"Enemy took 75 damage, remaining health: {enemy.health}")
+                if enemy.health <= 0:  # Enemy is dead, mark for removal and reward XP
+                    enemies_to_remove.append(enemy)
+                    player.gain_xp(50)  # Reward 50 XP for each kill
+                    struck_enemies += 1
+
+        # Remove dead enemies from the list
+        for enemy in enemies_to_remove:
+            enemies.remove(enemy)
+        return struck_enemies
 
 class MeleeAttack:
     def __init__(self, player_rect, attack_range=50, damage=50):

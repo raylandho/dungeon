@@ -1,6 +1,6 @@
 import pygame
 from settings import PLAYER_SIZE, TILE_SIZE
-from projectile import Projectile, MeleeAttack, Fireball
+from projectile import Projectile, MeleeAttack, Fireball, LightningStrike
 
 class Player:
     def __init__(self, x, y):
@@ -23,6 +23,9 @@ class Player:
         self.aim_direction = pygame.math.Vector2(1, 0)
         self.font = pygame.font.SysFont(None, 24)
         self.fireball_unlocked = False
+        self.is_placing_lightning = False
+        self.lightning_strike = None
+        self.lightning_unlocked = False
 
     def handle_movement(self, keys, walls, dungeon_width, dungeon_height):
         movement_speed = 3
@@ -149,6 +152,8 @@ class Player:
         self.draw_xp_text(screen)
         self.draw_level_text(screen)
         self.draw_aim_arrow(screen, camera_offset)
+        if self.is_placing_lightning:
+            self.lightning_strike.draw(screen, camera_offset)
 
     def draw_health_and_mana(self, screen):
         base_bar_width = 200
@@ -234,7 +239,32 @@ class Player:
     
     def unlock_fireball(self):
         self.fireball_unlocked = True
+        
+    def start_lightning_strike(self, screen_width, screen_height):
+        """Initialize lightning strike mode and freeze player movement."""
+        lightning_strike_mana_cost = 30
+        self.is_placing_lightning = True
+        self.lightning_strike = LightningStrike(self.rect.centerx, self.rect.centery, screen_width, screen_height)
+        self.use_mana(lightning_strike_mana_cost)
 
+    def confirm_lightning_strike(self, enemies):
+        """Confirm the lightning strike, damage enemies, and exit lightning mode."""
+        if self.lightning_strike:
+            struck_enemies = self.lightning_strike.check_enemies_in_range(enemies, self)
+            print(f"Lightning Strike hit {struck_enemies} enemies!")
+        self.is_placing_lightning = False
+        self.lightning_strike = None
+
+    def move_lightning_strike_target(self, direction):
+        """Move the lightning strike targeting circle if in lightning strike mode."""
+        if self.is_placing_lightning and self.lightning_strike:
+            self.lightning_strike.move(direction)
+
+    def unlock_lightning_strike(self):
+        """Unlock the Lightning Strike ability."""
+        self.lightning_unlocked = True
+        print("Lightning Strike unlocked!")
+        
     def gain_xp(self, amount):
         self.xp += amount
         if self.xp >= self.xp_for_next_level:

@@ -90,6 +90,8 @@ class Inventory:
                     print(f"{selected_attack} unlocked!")
                     if selected_attack == "Fireball":
                         player.unlock_fireball()
+                    if selected_attack == "Lightning Strike":
+                        player.unlock_lightning_strike()
                 else:
                     print("Not enough points to unlock this attack.")
             else:

@@ -38,46 +38,69 @@ def main():
     dungeon.clear_spawn_area(dungeon.layout, player_start_x // TILE_SIZE, player_start_y // TILE_SIZE)
 
     # Initialize enemies with valid spawn positions
-    enemies = [Enemy(*dungeon.get_random_open_position()) for _ in range(5)]
+    enemies = [Enemy(*dungeon.get_random_open_position()) for _ in range(12)]
 
     projectiles = []
 
     inventory = Inventory(SCREEN_WIDTH, SCREEN_HEIGHT)
 
     game_started = False
+    lightning_in_progress = False
 
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_F11:
-                    screen, current_mode = toggle_fullscreen(current_mode, screen, SCREEN_WIDTH, SCREEN_HEIGHT)
-                if event.key == pygame.K_SPACE and not game_started:
-                    game_started = True
-                if event.key == pygame.K_SPACE and not inventory.is_open:
-                    player.melee_attack(enemies)
-                if event.key == pygame.K_r and not inventory.is_open:
-                    player.ranged_attack(projectiles, dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
-                if event.key == pygame.K_f and not inventory.is_open and player.fireball_unlocked:  # Check if fireball is unlocked
-                    player.fireball_attack(projectiles, dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
-                if event.key == pygame.K_i:
-                    inventory.toggle()
-                if event.key == pygame.K_t and not inventory.is_open:  # Assuming 'T' is the key to teleport
-                    player.teleport(screen, camera_offset, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y, dungeon, SCREEN_WIDTH, SCREEN_HEIGHT, enemies, projectiles)
-                if inventory.is_open:
+
+            # Handle input for lightning strike targeting
+            if lightning_in_progress:
+                if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_UP:
-                        inventory.move_selection_up()
+                        player.move_lightning_strike_target("up")
                     elif event.key == pygame.K_DOWN:
-                        inventory.move_selection_down()
-                    elif event.key == pygame.K_RETURN:  # Unlock selected attack or upgrade
-                        inventory.unlock_attack(player)
+                        player.move_lightning_strike_target("down")
+                    elif event.key == pygame.K_LEFT:
+                        player.move_lightning_strike_target("left")
+                    elif event.key == pygame.K_RIGHT:
+                        player.move_lightning_strike_target("right")
+                    elif event.key == pygame.K_RETURN:  # Confirm lightning strike
+                        player.confirm_lightning_strike(enemies)
+                        lightning_in_progress = False  # Exit lightning strike mode
+
+            # Handle normal input when not in lightning strike mode
+            else:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_F11:
+                        screen, current_mode = toggle_fullscreen(current_mode, screen, SCREEN_WIDTH, SCREEN_HEIGHT)
+                    if event.key == pygame.K_SPACE and not game_started:
+                        game_started = True
+                    if event.key == pygame.K_SPACE and not inventory.is_open:
+                        player.melee_attack(enemies)
+                    if event.key == pygame.K_r and not inventory.is_open:
+                        player.ranged_attack(projectiles, dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
+                    if event.key == pygame.K_f and not inventory.is_open and player.fireball_unlocked:  # Fireball check
+                        player.fireball_attack(projectiles, dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
+                    if event.key == pygame.K_i:
+                        inventory.toggle()
+                    if event.key == pygame.K_t and not inventory.is_open:  # Teleport
+                        player.teleport(screen, camera_offset, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y, dungeon, SCREEN_WIDTH, SCREEN_HEIGHT, enemies, projectiles)
+                    if event.key == pygame.K_l and not inventory.is_open and player.lightning_unlocked:  # 'L' for Lightning Strike mode
+                        player.start_lightning_strike(dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
+                        lightning_in_progress = True
+
+                    if inventory.is_open:
+                        if event.key == pygame.K_UP:
+                            inventory.move_selection_up()
+                        elif event.key == pygame.K_DOWN:
+                            inventory.move_selection_down()
+                        elif event.key == pygame.K_RETURN:  # Unlock attack or upgrade
+                            inventory.unlock_attack(player)
 
         if inventory.is_open:
             inventory.draw(screen, player)  # Pass the player to access points directly
             continue
-        
+
         if not game_started:
             screen.fill((0, 0, 0))
             font = pygame.font.SysFont(None, 74)
@@ -88,9 +111,11 @@ def main():
             clock.tick(FPS)
             continue
 
-        keys = pygame.key.get_pressed()
-        player.handle_movement(keys, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y)
-        player.update_aim_direction(keys)
+        # Prevent player movement if lightning strike is in progress
+        if not lightning_in_progress:
+            keys = pygame.key.get_pressed()
+            player.handle_movement(keys, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y)
+            player.update_aim_direction(keys)
 
         camera_offset_x = player.rect.centerx - SCREEN_WIDTH // 2
         camera_offset_y = player.rect.centery - SCREEN_HEIGHT // 2
@@ -106,13 +131,12 @@ def main():
 
         for projectile in projectiles[:]:
             if isinstance(projectile, Fireball):
-                if not projectile.move(dungeon.get_walls(), enemies, player):  # Fireball move with walls and enemies
+                if not projectile.move(dungeon.get_walls(), enemies, player):  # Fireball with walls and enemies
                     projectiles.remove(projectile)
             else:
-                if not projectile.move(dungeon.get_walls()):  # Projectile move with only walls
+                if not projectile.move(dungeon.get_walls()):  # Projectile with walls only
                     projectiles.remove(projectile)
                 else:
-                    # Handle enemy collision for non-Fireball projectiles
                     for enemy in enemies[:]:
                         if projectile.rect.colliderect(enemy.rect):
                             if enemy.take_damage(projectile.damage):
