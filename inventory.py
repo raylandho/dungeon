@@ -92,6 +92,8 @@ class Inventory:
                         player.unlock_fireball()
                     if selected_attack == "Lightning Strike":
                         player.unlock_lightning_strike()
+                    if selected_attack == "Teleport Attack":
+                        player.unlock_teleport_attack()
                 else:
                     print("Not enough points to unlock this attack.")
             else:

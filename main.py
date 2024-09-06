@@ -72,8 +72,13 @@ def main():
                         player.fireball_attack(projectiles, dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
                     if event.key == pygame.K_i:
                         inventory.toggle()
-                    if event.key == pygame.K_t and not inventory.is_open:  # Teleport
-                        player.teleport(screen, camera_offset, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y, dungeon, SCREEN_WIDTH, SCREEN_HEIGHT, enemies, projectiles)
+                    if event.key == pygame.K_t and not inventory.is_open:
+                        if player.teleport_attack_unlocked:
+                            # Use upgraded teleport attack if unlocked
+                            player.teleport_attack(screen, camera_offset, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y, dungeon, SCREEN_WIDTH, SCREEN_HEIGHT, enemies, projectiles)
+                        else:
+                            # Use normal teleport
+                            player.teleport(screen, camera_offset, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y, dungeon, SCREEN_WIDTH, SCREEN_HEIGHT, enemies, projectiles)
                     if event.key == pygame.K_l and not inventory.is_open and player.lightning_unlocked:  # 'L' for Lightning Strike mode
                         player.start_lightning_strike(dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
                         lightning_in_progress = True

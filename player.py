@@ -26,6 +26,7 @@ class Player:
         self.is_placing_lightning = False
         self.lightning_strike = None
         self.lightning_unlocked = False
+        self.teleport_attack_unlocked = False
 
     def handle_movement(self, keys, walls, dungeon_width, dungeon_height):
         movement_speed = 3
@@ -264,6 +265,64 @@ class Player:
         """Unlock the Lightning Strike ability."""
         self.lightning_unlocked = True
         print("Lightning Strike unlocked!")
+    
+    def teleport_attack(self, screen, camera_offset, walls, dungeon_width, dungeon_height, dungeon, screen_width, screen_height, enemies, projectiles):
+        current_time = pygame.time.get_ticks()
+        
+        if current_time - self.last_teleport_time >= self.teleport_cooldown:
+            teleport_distance = TILE_SIZE * 3  # 3 tiles teleport distance
+            teleport_x = self.rect.x + self.aim_direction.x * teleport_distance
+            teleport_y = self.rect.y + self.aim_direction.y * teleport_distance
+
+            # Ensure teleport doesn't move the player off the map
+            if teleport_x < 0 or teleport_x + self.size > dungeon_width * TILE_SIZE:
+                return  # Invalid teleport position, abort teleport
+            if teleport_y < 0 or teleport_y + self.size > dungeon_height * TILE_SIZE:
+                return  # Invalid teleport position, abort teleport
+
+            # Save the original position in case teleport is invalid
+            original_position = self.rect.topleft
+            self.rect.topleft = (teleport_x, teleport_y)
+
+            # Check for collisions at the new position
+            if self.check_collision(self.rect.topleft, walls):
+                self.rect.topleft = original_position
+                return  # Collision detected, abort teleport
+
+            # List to track enemies to remove
+            enemies_to_remove = []
+
+            # Now, apply damage and knockback to nearby enemies
+            for enemy in enemies:
+                enemy_position = pygame.Vector2(enemy.rect.center)
+                player_position = pygame.Vector2(self.rect.center)
+
+                distance = player_position.distance_to(enemy_position)
+                
+                if distance <= TILE_SIZE * 3:  # Adjust damage range
+                    enemy.take_damage(25)  # Example damage value
+
+                    # Apply knockback to the enemy
+                    knockback_vector = (enemy_position - player_position).normalize() * TILE_SIZE
+                    enemy.rect.x += knockback_vector.x
+                    enemy.rect.y += knockback_vector.y
+
+                    # If enemy's health is <= 0, mark it for removal and grant XP
+                    if enemy.health <= 0:
+                        enemies_to_remove.append(enemy)
+                        self.gain_xp(50)  # Grant XP for killing the enemy
+
+            # Remove the dead enemies from the main enemy list
+            for enemy in enemies_to_remove:
+                enemies.remove(enemy)
+
+            self.last_teleport_time = current_time  # Update the last teleport time
+            print("Teleport attack successful")
+        
+    def unlock_teleport_attack(self):
+        """Unlock the Teleport Attack ability."""
+        self.teleport_attack_unlocked = True
+        print("Teleport attack unlocked!")
         
     def gain_xp(self, amount):
         self.xp += amount
