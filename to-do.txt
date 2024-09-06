@@ -1,11 +1,11 @@
 Easy
 - Display Level Up on screen
-- Add health / mana should not refill health / mana
 - Xp bar bugged after leveling (fixes after exiting level screen) (only when you kill too many mobs at once)
 
 Medium
 - Add more mobs
 - Add more attacks (as level up)
+- Rebind keys in inventory mode
 
 Hard
 - Add artwork

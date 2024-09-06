@@ -353,12 +353,12 @@ class Player:
 
     def increase_max_health(self, amount):
         self.max_health += amount
-        self.health = self.max_health  # Restore health to new max
+        self.health += amount
         print(f"Max health increased to {self.max_health}!")
 
     def increase_max_mana(self, amount):
         self.max_mana += amount
-        self.mana = self.max_mana  # Restore mana to new max
+        self.mana += amount 
         print(f"Max mana increased to {self.max_mana}!")
         
     def take_damage(self, amount):
