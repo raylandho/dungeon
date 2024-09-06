@@ -278,7 +278,7 @@ class Player:
     
     def teleport_attack(self, screen, camera_offset, walls, dungeon_width, dungeon_height, dungeon, screen_width, screen_height, enemies, projectiles):
         current_time = pygame.time.get_ticks()
-        
+
         if current_time - self.last_teleport_time >= self.teleport_cooldown:
             teleport_distance = TILE_SIZE * 3  # 3 tiles teleport distance
             teleport_x = self.rect.x + self.aim_direction.x * teleport_distance
@@ -308,7 +308,7 @@ class Player:
                 player_position = pygame.Vector2(self.rect.center)
 
                 distance = player_position.distance_to(enemy_position)
-                
+
                 if distance <= TILE_SIZE * 3:  # Adjust damage range
                     enemy.take_damage(25)  # Example damage value
 
@@ -316,6 +316,16 @@ class Player:
                     knockback_vector = (enemy_position - player_position).normalize() * TILE_SIZE
                     enemy.rect.x += knockback_vector.x
                     enemy.rect.y += knockback_vector.y
+
+                    # Check for collisions with other enemies after knockback
+                    for other_enemy in enemies:
+                        if other_enemy != enemy and enemy.rect.colliderect(other_enemy.rect):
+                            # If there is a collision, adjust the position to avoid overlap
+                            overlap_vector = pygame.Vector2(enemy.rect.center) - pygame.Vector2(other_enemy.rect.center)
+                            if overlap_vector.length() > 0:  # Avoid division by zero
+                                overlap_vector.normalize_ip()
+                                enemy.rect.x += overlap_vector.x * TILE_SIZE
+                                enemy.rect.y += overlap_vector.y * TILE_SIZE
 
                     # If enemy's health is <= 0, mark it for removal and grant XP
                     if enemy.health <= 0:

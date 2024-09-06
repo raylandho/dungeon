@@ -1,10 +1,8 @@
 Easy
-- Display Level Up on screen
-- Xp bar bugged after leveling (fixes after exiting level screen) (only when you kill too many mobs at once)
+- Xp bar bugged after leveling (fixes after exiting level screen) (only when you gain way too much xp at once)
 
 Medium
 - Add more mobs
-- Rebind keys in inventory mode
 
 Hard
 - Add artwork
