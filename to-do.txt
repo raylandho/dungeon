@@ -1,9 +1,9 @@
 Easy
 - Display Level Up on screen
 - Add health / mana should not refill health / mana
+- Xp bar bugged after leveling (fixes after exiting level screen) (only when you kill too many mobs at once)
 
 Medium
-- Mobs should not be able to overlap (fully)
 - Add more mobs
 - Add more attacks (as level up)
 

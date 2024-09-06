@@ -168,7 +168,7 @@ def main():
                 screen.blit(projectile.image, (projectile_screen_x, projectile_screen_y))
 
         for enemy in enemies:
-            enemy.move_towards_player(player.rect, dungeon.get_walls())
+            enemy.move_towards_player(player.rect, dungeon.get_walls(), enemies)
             enemy.update()
 
         for enemy in enemies:
