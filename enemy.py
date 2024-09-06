@@ -10,6 +10,10 @@ class Enemy:
         self.rect = self.image.get_rect(topleft=(x, y))
         self.health = 50  # Example health value
         self.speed = 2  # Example speed value
+        self.attack_range = 50  # Range within which enemy can attack the player
+        self.attack_cooldown = 1000  # Time in milliseconds between attacks
+        self.last_attack_time = 0  # Last time the enemy attacked
+        self.damage = 10  # Damage the enemy deals per attack
         self.is_flashing = False
         self.flash_duration = 100  # Duration of the flash effect in milliseconds
         self.original_color = (255, 0, 0)
@@ -57,6 +61,14 @@ class Enemy:
                 return True
         
         return False
+
+    def melee_attack(self, player):
+        """Attack the player if within range and if cooldown allows."""
+        current_time = pygame.time.get_ticks()
+        if self.rect.colliderect(player.rect) and current_time - self.last_attack_time >= self.attack_cooldown:
+            self.last_attack_time = current_time
+            player.take_damage(self.damage)  # Call player's take_damage function
+            print(f"Enemy attacks player for {self.damage} damage!")
 
     def draw(self, screen, camera_offset):
         screen_x = self.rect.x - camera_offset[0]

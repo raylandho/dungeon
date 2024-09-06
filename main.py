@@ -45,6 +45,8 @@ def main():
     inventory = Inventory(SCREEN_WIDTH, SCREEN_HEIGHT)
 
     game_started = False
+    game_over = False
+    
     lightning_in_progress = False
     lightning_move_cooldown = 35  # Cooldown in milliseconds (adjust as needed)
     last_lightning_move_time = 0
@@ -56,6 +58,17 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+                
+            if game_over:
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                    # Restart the game
+                    player.reset(player_start_x, player_start_y)  # Reset player state
+                    enemies = [Enemy(*dungeon.get_random_open_position()) for _ in range(12)]  # Respawn enemies
+                    projectiles.clear()  # Clear all projectiles
+                    game_over = False
+                    game_started = True
+                    print("Game restarted!")
+                continue 
 
             # Handle normal input when not in lightning strike mode
             if not lightning_in_progress:
@@ -111,6 +124,21 @@ def main():
                 if keys[pygame.K_RETURN]:  # Confirm lightning strike
                     player.confirm_lightning_strike(enemies)
                     lightning_in_progress = False  # Exit lightning strike mode
+        
+        # Check if player is dead and set the game_over flag
+        if player.is_dead:
+            game_over = True
+
+        if game_over:
+            # Display "You died" message
+            screen.fill((0, 0, 0))
+            font = pygame.font.SysFont(None, 74)
+            text_surface = font.render("You Died! Press Space to Restart", True, (255, 0, 0))
+            text_rect = text_surface.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+            screen.blit(text_surface, text_rect)
+            pygame.display.flip()
+            clock.tick(FPS)
+            continue
 
         if inventory.is_open:
             inventory.draw(screen, player)  # Pass the player to access points directly
@@ -169,6 +197,7 @@ def main():
 
         for enemy in enemies:
             enemy.move_towards_player(player.rect, dungeon.get_walls(), enemies)
+            enemy.melee_attack(player)
             enemy.update()
 
         for enemy in enemies:

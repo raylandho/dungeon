@@ -16,6 +16,7 @@ class Player:
         self.xp_for_next_level = 100
         self.level = 1
         self.points = 0  # Points for leveling up
+        self.is_dead = False
         self.attack_cooldown = 500  # Cooldown for attacks
         self.last_attack_time = pygame.time.get_ticks()
         self.teleport_cooldown = 2000  # Cooldown for teleporting (in milliseconds)
@@ -353,6 +354,23 @@ class Player:
         
     def take_damage(self, amount):
         self.health = max(0, self.health - amount)
+        if self.health == 0:
+            self.die()
+    
+    def die(self):
+        """Trigger player death."""
+        print("Player died!")
+        self.is_dead = True  # Set player to dead state
+
+    def reset(self, x, y):
+        """Reset player to initial state when restarting the game."""
+        self.rect.topleft = (x, y)
+        self.health = self.max_health
+        self.mana = self.max_mana
+        self.is_dead = False
+        self.xp = 0
+        self.level = 1
+        print("Game restarted!")
 
     def use_mana(self, amount):
         self.mana = max(0, self.mana - amount)
