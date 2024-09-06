@@ -29,7 +29,7 @@ class Player:
         self.lightning_unlocked = False
         self.teleport_attack_unlocked = False
 
-    def handle_movement(self, keys, walls, dungeon_width, dungeon_height):
+    def handle_movement(self, keys, walls, dungeon_width, dungeon_height, enemies):
         movement_speed = 3
         direction = pygame.math.Vector2(0, 0)
 
@@ -56,8 +56,8 @@ class Player:
         if new_y < 0 or new_y + self.size > dungeon_height * TILE_SIZE:
             new_y = self.rect.y  # Prevent vertical movement off the map
 
-        # Check collisions
-        if not self.check_collision((new_x, new_y), walls):
+        # Check collisions with walls and enemies
+        if not self.check_collision((new_x, new_y), walls, enemies):
             self.rect.topleft = (new_x, new_y)
 
     def teleport(self, screen, camera_offset, walls, dungeon_width, dungeon_height, dungeon, screen_width, screen_height, enemies, projectiles):
@@ -84,7 +84,7 @@ class Player:
         self.rect.topleft = (teleport_x, teleport_y)
 
         # Check for collisions at the new position
-        if self.check_collision(self.rect.topleft, walls):
+        if self.check_collision(self.rect.topleft, walls, enemies):
             #print("Collision detected at target position, resetting to original position")
             self.rect.topleft = original_position
             return
@@ -139,11 +139,20 @@ class Player:
             direction.normalize_ip()
             self.aim_direction = direction
 
-    def check_collision(self, new_pos, walls):
+    def check_collision(self, new_pos, walls, enemies):
+        """Check for collisions with walls or enemies at the new position."""
         future_rect = pygame.Rect(new_pos, (self.size, self.size))
+        
+        # Check collision with walls
         for wall in walls:
             if future_rect.colliderect(wall):
                 return True
+
+        # Check collision with enemies
+        for enemy in enemies:
+            if future_rect.colliderect(enemy.rect):
+                return True
+
         return False
 
     def draw(self, screen, camera_offset):
@@ -204,7 +213,7 @@ class Player:
         current_time = pygame.time.get_ticks()
         if current_time - self.last_attack_time >= self.attack_cooldown:
             self.last_attack_time = current_time
-            melee_attack = MeleeAttack(self.rect)
+            melee_attack = MeleeAttack(self.rect, self.aim_direction)  # Pass aim direction
             kills = melee_attack.check_collision(enemies)
             if kills > 0:
                 self.gain_xp(50 * kills)
@@ -286,7 +295,7 @@ class Player:
             self.rect.topleft = (teleport_x, teleport_y)
 
             # Check for collisions at the new position
-            if self.check_collision(self.rect.topleft, walls):
+            if self.check_collision(self.rect.topleft, walls, enemies):
                 self.rect.topleft = original_position
                 return  # Collision detected, abort teleport
 

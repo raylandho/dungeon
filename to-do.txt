@@ -8,7 +8,6 @@ Medium
 - Add more attacks (as level up)
 
 Hard
-- Mobs should be able to hit the player
 - Add artwork
 - Add soundtrack
 - Add sound effects

@@ -38,7 +38,7 @@ def main():
     dungeon.clear_spawn_area(dungeon.layout, player_start_x // TILE_SIZE, player_start_y // TILE_SIZE)
 
     # Initialize enemies with valid spawn positions
-    enemies = [Enemy(*dungeon.get_random_open_position()) for _ in range(12)]
+    enemies = [Enemy(*dungeon.get_random_open_position()) for _ in range(20)]
 
     projectiles = []
 
@@ -157,7 +157,7 @@ def main():
         # Prevent player movement if lightning strike is in progress
         if not lightning_in_progress:
             keys = pygame.key.get_pressed()
-            player.handle_movement(keys, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y)
+            player.handle_movement(keys, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y, enemies)
             player.update_aim_direction(keys)
 
         camera_offset_x = player.rect.centerx - SCREEN_WIDTH // 2

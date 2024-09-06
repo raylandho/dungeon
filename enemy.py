@@ -1,6 +1,6 @@
 import pygame
 import random
-from settings import TILE_SIZE, PLAYER_SIZE
+from settings import TILE_SIZE
 
 class Enemy:
     def __init__(self, x, y):
@@ -10,14 +10,14 @@ class Enemy:
         self.rect = self.image.get_rect(topleft=(x, y))
         self.health = 50  # Example health value
         self.speed = 2  # Example speed value
-        self.attack_range = 50  # Range within which enemy can attack the player
-        self.attack_cooldown = 1000  # Time in milliseconds between attacks
-        self.last_attack_time = 0  # Last time the enemy attacked
-        self.damage = 10  # Damage the enemy deals per attack
         self.is_flashing = False
         self.flash_duration = 100  # Duration of the flash effect in milliseconds
         self.original_color = (255, 0, 0)
-    
+        self.melee_range = 50  # Melee attack range
+        self.melee_damage = 10  # Damage dealt by melee attack
+        self.attack_cooldown = 1000  # Cooldown between melee attacks in milliseconds
+        self.last_attack_time = 0  # Track the last time the enemy attacked
+
     def get_valid_spawn_position(self, dungeon, enemies):
         """Get a valid spawn position that doesn't overlap with other enemies or walls."""
         while True:
@@ -35,7 +35,7 @@ class Enemy:
         return False
 
     def move_towards_player(self, player_rect, walls, enemies):
-        """Simple AI to move the enemy towards the player without overlapping other enemies."""
+        """Move the enemy towards the player without overlapping other enemies or the player."""
         dx = player_rect.x - self.rect.x
         dy = player_rect.y - self.rect.y
 
@@ -44,10 +44,12 @@ class Enemy:
         else:
             new_pos = (self.rect.x, self.rect.y + (self.speed if dy > 0 else -self.speed))
 
-        if not self.check_collision(new_pos, walls, enemies):
+        # Prevent overlapping with walls, other enemies, and the player
+        if not self.check_collision(new_pos, walls, enemies) and not self.check_collision_with_player(new_pos, player_rect):
             self.rect.topleft = new_pos
 
     def check_collision(self, new_pos, walls, enemies):
+        """Check for collision with walls and other enemies."""
         future_rect = pygame.Rect(new_pos, (self.size, self.size))
         
         # Check collision with walls
@@ -62,13 +64,24 @@ class Enemy:
         
         return False
 
+    def check_collision_with_player(self, new_pos, player_rect):
+        """Check for collision with the player."""
+        future_rect = pygame.Rect(new_pos, (self.size, self.size))
+        return future_rect.colliderect(player_rect)
+
     def melee_attack(self, player):
-        """Attack the player if within range and if cooldown allows."""
+        """Perform a melee attack on the player if within range and cooldown is over."""
         current_time = pygame.time.get_ticks()
-        if self.rect.colliderect(player.rect) and current_time - self.last_attack_time >= self.attack_cooldown:
-            self.last_attack_time = current_time
-            player.take_damage(self.damage)  # Call player's take_damage function
-            print(f"Enemy attacks player for {self.damage} damage!")
+        
+        # Use pygame.Vector2 for distance calculation
+        enemy_pos = pygame.math.Vector2(self.rect.center)
+        player_pos = pygame.math.Vector2(player.rect.center)
+        distance_to_player = enemy_pos.distance_to(player_pos)
+        
+        if distance_to_player <= self.melee_range and current_time - self.last_attack_time >= self.attack_cooldown:
+            player.take_damage(self.melee_damage)  # Inflict damage to the player
+            self.last_attack_time = current_time  # Update last attack time
+            print(f"Enemy dealt {self.melee_damage} damage to the player!")
 
     def draw(self, screen, camera_offset):
         screen_x = self.rect.x - camera_offset[0]

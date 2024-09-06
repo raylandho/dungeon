@@ -126,13 +126,22 @@ class LightningStrike:
         return struck_enemies
 
 class MeleeAttack:
-    def __init__(self, player_rect, attack_range=50, damage=50):
-        self.rect = player_rect.copy()
-        self.rect.inflate_ip(attack_range, attack_range)  # Increase the size of the rect to represent the attack range
+    def __init__(self, player_rect, aim_direction, attack_range=50, damage=50):
+        # Set the attack range to be in front of the player based on aim direction
+        attack_offset_x = aim_direction.x * (player_rect.width // 2 + attack_range // 2)
+        attack_offset_y = aim_direction.y * (player_rect.height // 2 + attack_range // 2)
+
+        # Create a rectangle that represents the melee hitbox directly in front of the player
+        self.rect = pygame.Rect(
+            player_rect.centerx + attack_offset_x - attack_range // 2,
+            player_rect.centery + attack_offset_y - attack_range // 2,
+            attack_range,
+            attack_range
+        )
         self.damage = damage
 
     def check_collision(self, enemies):
-        """Check if the melee attack collides with any enemies and apply damage."""
+        """Check if the melee attack hits any enemies and apply damage."""
         kills = 0
         for enemy in enemies[:]:
             if self.rect.colliderect(enemy.rect):
