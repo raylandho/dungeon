@@ -3,7 +3,7 @@ import sys
 from settings import TILE_SIZE, FPS
 from player import Player
 from projectile import Projectile, Fireball, EnemyProjectile  # Import EnemyProjectile
-from enemy import RangedEnemy, Enemy  # Import both RangedEnemy and Enemy (melee enemies)
+from enemy import RangedEnemy, Enemy, BossMeleeEnemy  # Import both RangedEnemy and Enemy (melee enemies)
 from dungeon import Dungeon
 from inventory import Inventory  # Import the Inventory class
 
@@ -40,9 +40,10 @@ def main():
     dungeon.clear_spawn_area(dungeon.layout, player_start_x // TILE_SIZE, player_start_y // TILE_SIZE)
 
     # Initialize 10 ranged and 10 melee enemies with valid spawn positions
-    ranged_enemies = [RangedEnemy(*dungeon.get_random_open_position(), SCREEN_WIDTH, SCREEN_HEIGHT) for _ in range(10)]
+    ranged_enemies = [RangedEnemy(*dungeon.get_random_open_position(), SCREEN_WIDTH, SCREEN_HEIGHT) for _ in range(3)]
     melee_enemies = [Enemy(*dungeon.get_random_open_position()) for _ in range(10)]
-    enemies = ranged_enemies + melee_enemies  # Combine both lists into the main enemies list
+    boss_melee_enemies = [BossMeleeEnemy(*dungeon.get_random_open_position()) for _ in range(2)]
+    enemies = ranged_enemies + melee_enemies + boss_melee_enemies # Combine both lists into the main enemies list
 
     projectiles = []
     enemy_projectiles = []  # New list to hold enemy projectiles
@@ -68,9 +69,10 @@ def main():
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                     # Restart the game
                     player.reset(player_start_x, player_start_y, inventory)  # Pass inventory to reset
-                    ranged_enemies = [RangedEnemy(*dungeon.get_random_open_position(), SCREEN_WIDTH, SCREEN_HEIGHT) for _ in range(10)]
+                    ranged_enemies = [RangedEnemy(*dungeon.get_random_open_position(), SCREEN_WIDTH, SCREEN_HEIGHT) for _ in range(3)]
                     melee_enemies = [Enemy(*dungeon.get_random_open_position()) for _ in range(10)]
-                    enemies = ranged_enemies + melee_enemies  # Respawn 10 ranged and 10 melee enemies
+                    boss_melee_enemies = [BossMeleeEnemy(*dungeon.get_random_open_position()) for _ in range(2)]
+                    enemies = ranged_enemies + melee_enemies + boss_melee_enemies  # Respawn 10 ranged and 10 melee enemies
                     projectiles.clear()  # Clear all projectiles
                     enemy_projectiles.clear()  # Clear enemy projectiles
                     game_over = False
@@ -183,6 +185,9 @@ def main():
                 if not projectile.move(dungeon.get_walls(), enemies, player):  # Fireball with walls and enemies
                     projectiles.remove(projectile)
                     projectile_removed = True  # Mark projectile as removed
+                else:
+                    projectile.draw(screen, camera_offset)
+                    continue
 
             elif not projectile_removed and not projectile.move(dungeon.get_walls()):  # Regular projectile with walls only
                 projectiles.remove(projectile)

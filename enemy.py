@@ -148,3 +148,30 @@ class RangedEnemy(Enemy):
         """Draw the enemy sprite."""
         super().draw(screen, camera_offset)
         # Projectiles are drawn in the main loop
+
+class BossMeleeEnemy(Enemy):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.size = 80  # Boss is twice the size of a regular enemy
+        self.image = pygame.Surface((self.size, self.size))
+        self.image.fill((0, 0, 255))  # Blue for boss enemies
+        self.original_color = (0, 0, 255)  # Original color is blue
+        self.health = 200  # Much higher health
+        self.speed = 3  # Faster than regular enemies
+        self.melee_damage = 25  # Stronger melee attacks
+        self.melee_range = 70  # Longer attack range
+        self.attack_cooldown = 800  # Slightly shorter cooldown between attacks
+
+    def take_damage(self, amount):
+        """Reduce the enemy's health by a specified amount and trigger the flash effect."""
+        self.health -= amount
+        self.start_flash()  # Trigger the flash effect
+        print(f"Boss took {amount} damage, remaining health: {self.health}")
+        if self.health <= 0:
+            return True  # Return True if the boss dies
+        return False
+
+    def update(self, player, walls, camera_offset, enemies):
+        """Update boss logic."""
+        super().update(player, walls, camera_offset, enemies)
+        # Additional logic for boss can be added here if needed

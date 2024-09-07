@@ -1,8 +1,10 @@
 Easy
 - Xp bar bugged after leveling (fixes after exiting level screen) (only when you gain way too much xp at once)
+- right side of map bugged (can't replicate)
 
 Medium
-- Add more mobs
+- Add A* to mob movement
+- Make ranged mob stop moving when they can shoot at player
 
 Hard
 - Add artwork

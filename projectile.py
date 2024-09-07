@@ -74,17 +74,18 @@ class Fireball(Projectile):
 
         # Check for collision with walls
         if self.check_collision(walls):
-            return False  # Return False to indicate the fireball should be removed
+            return False  # Return False to indicate the fireball should be removed if it hits a wall
 
         # Check for collision with enemies and deal damage
-        for enemy in enemies[:]:
+        for enemy in enemies:
             if self.rect.colliderect(enemy.rect):
                 enemy.take_damage(self.damage)
                 if enemy.health <= 0:  # Ensure enemy is removed if health is 0 or less
                     enemies.remove(enemy)
-                    player.gain_xp(50)  # Ensure XP is granted for killing the enemy
+                    player.gain_xp(50)  # Grant XP for killing the enemy
 
-        return True  # Fireball keeps moving until it hits a wall
+        # Continue moving even after hitting enemies (don't return False here)
+        return True  # Fireball keeps moving until it hits a wall or goes off-screen
 
 class LightningStrike:
     def __init__(self, player_x, player_y, map_width, map_height, strike_radius=TILE_SIZE * 2):
