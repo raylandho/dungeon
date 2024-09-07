@@ -170,7 +170,7 @@ class Player:
     def check_collision(self, new_pos, walls, enemies):
         """Check for collisions with walls or enemies at the new position."""
         future_rect = pygame.Rect(new_pos, (self.size, self.size))
-        
+
         # Check collision with walls
         for wall in walls:
             if future_rect.colliderect(wall):

@@ -8,6 +8,8 @@ from dungeon import Dungeon
 from inventory import Inventory  # Import the Inventory class
 
 def toggle_fullscreen(current_mode, screen, SCREEN_WIDTH, SCREEN_HEIGHT):
+    if current_mode is None:
+        return screen, current_mode
     if current_mode == "fullscreen":
         screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.RESIZABLE | pygame.NOFRAME)
         current_mode = "borderless"
@@ -158,7 +160,7 @@ def main():
 
         if not lightning_in_progress:
             keys = pygame.key.get_pressed()
-            player.handle_movement(keys, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y, enemies)
+            player.handle_movement(keys, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y, enemies)  # Pass enemies to prevent overlap
             player.update_aim_direction(keys)
 
         camera_offset_x = player.rect.centerx - SCREEN_WIDTH // 2

@@ -57,7 +57,7 @@ class Enemy:
             new_pos = (self.rect.x, self.rect.y + (self.speed if dy > 0 else -self.speed))
 
         # Prevent overlapping with walls, other enemies, and the player
-        if not self.check_collision(new_pos, walls, enemies) and not self.overlaps_with_other_enemies(new_pos, enemies):
+        if not self.check_collision(new_pos, walls, enemies) and not self.check_collision_with_player(new_pos, player_rect):
             self.rect.topleft = new_pos
 
     def check_collision(self, new_pos, walls, enemies):
