@@ -1,6 +1,12 @@
 import pygame
 import random
 from settings import TILE_SIZE
+from projectile import EnemyProjectile
+
+import pygame
+import random
+from settings import TILE_SIZE
+from projectile import EnemyProjectile
 
 class Enemy:
     def __init__(self, x, y):
@@ -12,27 +18,38 @@ class Enemy:
         self.speed = 2  # Example speed value
         self.is_flashing = False
         self.flash_duration = 100  # Duration of the flash effect in milliseconds
+        self.flash_start_time = 0  # Track when the flash started
         self.original_color = (255, 0, 0)
         self.melee_range = 50  # Melee attack range
         self.melee_damage = 10  # Damage dealt by melee attack
         self.attack_cooldown = 1000  # Cooldown between melee attacks in milliseconds
         self.last_attack_time = 0  # Track the last time the enemy attacked
 
-    def get_valid_spawn_position(self, dungeon, enemies):
-        """Get a valid spawn position that doesn't overlap with other enemies or walls."""
-        while True:
-            x = random.randint(0, dungeon.tiles_x - 1) * TILE_SIZE
-            y = random.randint(0, dungeon.tiles_y - 1) * TILE_SIZE
-            if dungeon.layout[y // TILE_SIZE][x // TILE_SIZE] != 1 and not self.overlaps_with_enemies(x, y, enemies):
-                return (x, y)
-
-    def overlaps_with_enemies(self, x, y, enemies):
-        """Check if the given position overlaps with any existing enemies."""
-        temp_rect = pygame.Rect(x, y, self.size, self.size)
-        for enemy in enemies:
-            if temp_rect.colliderect(enemy.rect):
-                return True
+    def take_damage(self, amount):
+        """Reduce the enemy's health by a specified amount and trigger the flash effect."""
+        self.health -= amount
+        self.start_flash()  # Trigger the flash effect
+        print(f"Enemy took {amount} damage, remaining health: {self.health}")
+        if self.health <= 0:
+            return True  # Return True if the enemy dies
         return False
+
+    def start_flash(self):
+        """Start the flash effect by changing the color to white."""
+        self.is_flashing = True
+        self.image.fill((255, 255, 255))  # Change color to white
+        self.flash_start_time = pygame.time.get_ticks()  # Record the time when the flash starts
+
+    def update(self, player, walls, camera_offset):
+        """Update enemy state, including movement and flashing."""
+        self.move_towards_player(player.rect, walls, [])
+        self.melee_attack(player)
+
+        if self.is_flashing:
+            current_time = pygame.time.get_ticks()
+            if current_time - self.flash_start_time >= self.flash_duration:
+                self.image.fill(self.original_color)  # Revert to the original color
+                self.is_flashing = False
 
     def move_towards_player(self, player_rect, walls, enemies):
         """Move the enemy towards the player without overlapping other enemies or the player."""
@@ -84,29 +101,45 @@ class Enemy:
             print(f"Enemy dealt {self.melee_damage} damage to the player!")
 
     def draw(self, screen, camera_offset):
+        """Draw the enemy sprite."""
         screen_x = self.rect.x - camera_offset[0]
         screen_y = self.rect.y - camera_offset[1]
         screen.blit(self.image, (screen_x, screen_y))
 
-    def take_damage(self, amount):
-        """Reduce the enemy's health by a specified amount and trigger the flash effect."""
-        self.health = max(0, self.health - amount)
-        self.start_flash()
-        print(f"Enemy took {amount} damage, remaining health: {self.health}")
-        if self.health == 0:
-            return True  # Return True if the enemy dies
-        return False
+    def is_dead(self):
+        """Return True if the enemy's health is 0 or less."""
+        return self.health <= 0
 
-    def start_flash(self):
-        """Start the flash effect by changing the color to white."""
-        self.is_flashing = True
-        self.image.fill((255, 255, 255))  # Change color to white
-        self.flash_start_time = pygame.time.get_ticks()  # Record the time when the flash starts
+class RangedEnemy(Enemy):
+    def __init__(self, x, y, screen_width, screen_height):
+        super().__init__(x, y)
+        self.image.fill((255, 165, 0))  # Orange color for ranged enemies
+        self.original_color = (255, 165, 0)  # Original color is orange
+        self.projectiles = []  # List to store enemy projectiles
+        self.shoot_cooldown = 1500  # Cooldown between shots (milliseconds)
+        self.last_shot_time = 0  # Track the last time the enemy shot
+        self.screen_width = screen_width
+        self.screen_height = screen_height
 
-    def update(self):
-        """Update the enemy's state, including the flash effect."""
-        if self.is_flashing:
-            current_time = pygame.time.get_ticks()
-            if current_time - self.flash_start_time >= self.flash_duration:
-                self.image.fill(self.original_color)  # Revert to the original color
-                self.is_flashing = False
+    def shoot(self, player):
+        """Shoot a projectile towards the player."""
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_shot_time >= self.shoot_cooldown:
+            # Create a new projectile aimed at the player
+            direction = pygame.math.Vector2(player.rect.centerx - self.rect.centerx, player.rect.centery - self.rect.centery)
+            direction = direction.normalize()  # Normalize the direction vector
+            
+            # Initialize the projectile at the enemy's center
+            new_projectile = EnemyProjectile(self.rect.centerx, self.rect.centery, direction, self.screen_width, self.screen_height)
+            self.projectiles.append(new_projectile)
+            self.last_shot_time = current_time
+
+    def update(self, player, walls, camera_offset):
+        """Update enemy logic, including shooting."""
+        super().update(player, walls, camera_offset)  # Pass the required arguments to the base update method
+        self.shoot(player)  # Attempt to shoot at the player
+
+    def draw(self, screen, camera_offset):
+        """Draw the enemy sprite."""
+        super().draw(screen, camera_offset)
+        # Projectiles are drawn in the main loop

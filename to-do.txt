@@ -1,5 +1,7 @@
 Easy
 - Xp bar bugged after leveling (fixes after exiting level screen) (only when you gain way too much xp at once)
+- when restarting game, xp to next level, health, mana and unlocked abilities aren't resetting
+- Enemies overlapping
 
 Medium
 - Add more mobs

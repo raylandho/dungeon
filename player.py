@@ -65,18 +65,14 @@ class Player:
         if current_time - self.last_teleport_time < self.teleport_cooldown:
             return  # Teleport is on cooldown
 
-        teleport_distance = TILE_SIZE * 3  # 3 tiles
+        teleport_distance = TILE_SIZE * 3  # Limit teleport to 3 tiles
         teleport_x = self.rect.x + self.aim_direction.x * teleport_distance
         teleport_y = self.rect.y + self.aim_direction.y * teleport_distance
 
-        #print(f"Attempting to teleport to position ({teleport_x}, {teleport_y})")
-
-        # Ensure teleport doesn't move the player off the map
+        # Ensure teleport doesn't move the player off the map (no wrapping)
         if teleport_x < 0 or teleport_x + self.size > dungeon_width * TILE_SIZE:
-            #print("Invalid teleport position (off the map) - X axis")
             return  # Invalid teleport position, abort teleport
         if teleport_y < 0 or teleport_y + self.size > dungeon_height * TILE_SIZE:
-            #print("Invalid teleport position (off the map) - Y axis")
             return  # Invalid teleport position, abort teleport
 
         # Save the original position in case the teleport is invalid
@@ -85,44 +81,76 @@ class Player:
 
         # Check for collisions at the new position
         if self.check_collision(self.rect.topleft, walls, enemies):
-            #print("Collision detected at target position, resetting to original position")
             self.rect.topleft = original_position
-            return
-
-        #print(f"Teleport successful to ({teleport_x}, {teleport_y})")
-
-        # Update camera position to track player
-        for _ in range(10):  # Increase iterations to make the camera smoothly follow
-            camera_offset_x = self.rect.centerx - screen_width // 2
-            camera_offset_y = self.rect.centery - screen_height // 2
-
-            # Ensure the camera doesn't show beyond the map edges
-            camera_offset_x = max(0, min(camera_offset_x, dungeon_width * TILE_SIZE - screen_width))
-            camera_offset_y = max(0, min(camera_offset_y, dungeon_height * TILE_SIZE - screen_height))
-
-            camera_offset = (camera_offset_x, camera_offset_y)
-
-            # Redraw the dungeon, player, projectiles, and enemies with updated camera offset
-            screen.fill((0, 0, 0))  # Clear screen with black
-            dungeon.draw(screen, camera_offset)
-
-            # Draw each projectile
-            for projectile in projectiles:
-                projectile_screen_x = projectile.rect.x - camera_offset_x
-                projectile_screen_y = projectile.rect.y - camera_offset_y
-                screen.blit(projectile.image, (projectile_screen_x, projectile_screen_y))
-
-            # Draw each enemy
-            for enemy in enemies:
-                enemy.draw(screen, camera_offset)
-
-            self.draw(screen, camera_offset)
-            pygame.display.flip()
-            pygame.time.delay(30)  # Adjust delay for smoother camera tracking
+            return  # Collision detected, abort teleport
 
         # Update the last teleport time
         self.last_teleport_time = current_time
-        #print("Teleport complete, cooldown started")
+        print("Teleport successful")
+
+    def teleport_attack(self, screen, camera_offset, walls, dungeon_width, dungeon_height, dungeon, screen_width, screen_height, enemies, projectiles):
+        """Teleport attack method which moves the player and damages enemies."""
+        current_time = pygame.time.get_ticks()
+
+        if current_time - self.last_teleport_time >= self.teleport_cooldown:
+            teleport_distance = TILE_SIZE * 3  # 3 tiles teleport distance
+            teleport_x = self.rect.x + self.aim_direction.x * teleport_distance
+            teleport_y = self.rect.y + self.aim_direction.y * teleport_distance
+
+            # Ensure teleport doesn't move the player off the map
+            if teleport_x < 0 or teleport_x + self.size > dungeon_width * TILE_SIZE:
+                return  # Invalid teleport position, abort teleport
+            if teleport_y < 0 or teleport_y + self.size > dungeon_height * TILE_SIZE:
+                return  # Invalid teleport position, abort teleport
+
+            # Save the original position in case teleport is invalid
+            original_position = self.rect.topleft
+            self.rect.topleft = (teleport_x, teleport_y)
+
+            # Check for collisions at the new position
+            if self.check_collision(self.rect.topleft, walls, enemies):
+                self.rect.topleft = original_position
+                return  # Collision detected, abort teleport
+
+            # List to track enemies to remove
+            enemies_to_remove = []
+
+            # Now, apply damage and knockback to nearby enemies
+            for enemy in enemies:
+                enemy_position = pygame.Vector2(enemy.rect.center)
+                player_position = pygame.Vector2(self.rect.center)
+
+                distance = player_position.distance_to(enemy_position)
+
+                if distance <= TILE_SIZE * 3:  # Adjust damage range
+                    enemy.take_damage(25)  # Example damage value
+
+                    # Apply knockback to the enemy
+                    knockback_vector = (enemy_position - player_position).normalize() * TILE_SIZE
+                    enemy.rect.x += knockback_vector.x
+                    enemy.rect.y += knockback_vector.y
+
+                    # Check for collisions with other enemies after knockback
+                    for other_enemy in enemies:
+                        if other_enemy != enemy and enemy.rect.colliderect(other_enemy.rect):
+                            # If there is a collision, adjust the position to avoid overlap
+                            overlap_vector = pygame.Vector2(enemy.rect.center) - pygame.Vector2(other_enemy.rect.center)
+                            if overlap_vector.length() > 0:  # Avoid division by zero
+                                overlap_vector.normalize_ip()
+                                enemy.rect.x += overlap_vector.x * TILE_SIZE
+                                enemy.rect.y += overlap_vector.y * TILE_SIZE
+
+                    # If enemy's health is <= 0, mark it for removal and grant XP
+                    if enemy.health <= 0:
+                        enemies_to_remove.append(enemy)
+                        self.gain_xp(50)  # Grant XP for killing the enemy
+
+            # Remove the dead enemies from the main enemy list
+            for enemy in enemies_to_remove:
+                enemies.remove(enemy)
+
+            self.last_teleport_time = current_time  # Update the last teleport time
+            print("Teleport attack successful")
 
     def update_aim_direction(self, keys):
         direction = pygame.math.Vector2(0, 0)
@@ -275,69 +303,6 @@ class Player:
         """Unlock the Lightning Strike ability."""
         self.lightning_unlocked = True
         print("Lightning Strike unlocked!")
-    
-    def teleport_attack(self, screen, camera_offset, walls, dungeon_width, dungeon_height, dungeon, screen_width, screen_height, enemies, projectiles):
-        current_time = pygame.time.get_ticks()
-
-        if current_time - self.last_teleport_time >= self.teleport_cooldown:
-            teleport_distance = TILE_SIZE * 3  # 3 tiles teleport distance
-            teleport_x = self.rect.x + self.aim_direction.x * teleport_distance
-            teleport_y = self.rect.y + self.aim_direction.y * teleport_distance
-
-            # Ensure teleport doesn't move the player off the map
-            if teleport_x < 0 or teleport_x + self.size > dungeon_width * TILE_SIZE:
-                return  # Invalid teleport position, abort teleport
-            if teleport_y < 0 or teleport_y + self.size > dungeon_height * TILE_SIZE:
-                return  # Invalid teleport position, abort teleport
-
-            # Save the original position in case teleport is invalid
-            original_position = self.rect.topleft
-            self.rect.topleft = (teleport_x, teleport_y)
-
-            # Check for collisions at the new position
-            if self.check_collision(self.rect.topleft, walls, enemies):
-                self.rect.topleft = original_position
-                return  # Collision detected, abort teleport
-
-            # List to track enemies to remove
-            enemies_to_remove = []
-
-            # Now, apply damage and knockback to nearby enemies
-            for enemy in enemies:
-                enemy_position = pygame.Vector2(enemy.rect.center)
-                player_position = pygame.Vector2(self.rect.center)
-
-                distance = player_position.distance_to(enemy_position)
-
-                if distance <= TILE_SIZE * 3:  # Adjust damage range
-                    enemy.take_damage(25)  # Example damage value
-
-                    # Apply knockback to the enemy
-                    knockback_vector = (enemy_position - player_position).normalize() * TILE_SIZE
-                    enemy.rect.x += knockback_vector.x
-                    enemy.rect.y += knockback_vector.y
-
-                    # Check for collisions with other enemies after knockback
-                    for other_enemy in enemies:
-                        if other_enemy != enemy and enemy.rect.colliderect(other_enemy.rect):
-                            # If there is a collision, adjust the position to avoid overlap
-                            overlap_vector = pygame.Vector2(enemy.rect.center) - pygame.Vector2(other_enemy.rect.center)
-                            if overlap_vector.length() > 0:  # Avoid division by zero
-                                overlap_vector.normalize_ip()
-                                enemy.rect.x += overlap_vector.x * TILE_SIZE
-                                enemy.rect.y += overlap_vector.y * TILE_SIZE
-
-                    # If enemy's health is <= 0, mark it for removal and grant XP
-                    if enemy.health <= 0:
-                        enemies_to_remove.append(enemy)
-                        self.gain_xp(50)  # Grant XP for killing the enemy
-
-            # Remove the dead enemies from the main enemy list
-            for enemy in enemies_to_remove:
-                enemies.remove(enemy)
-
-            self.last_teleport_time = current_time  # Update the last teleport time
-            print("Teleport attack successful")
         
     def unlock_teleport_attack(self):
         """Unlock the Teleport Attack ability."""

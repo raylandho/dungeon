@@ -2,41 +2,40 @@ import pygame
 from settings import PLAYER_SIZE, TILE_SIZE
 
 class Projectile:
-    def __init__(self, x, y, direction, screen_width, screen_height, speed=5, size=None):
-        if size is None:
-            size = PLAYER_SIZE // 2  # Default size
-        self.size = size
+    def __init__(self, x, y, direction, screen_width, screen_height, speed=5, size=None, damage=25):
+        self.size = size or TILE_SIZE // 2  # Default size based on tile size
         self.image = pygame.Surface((self.size, self.size))
         self.image.fill((255, 255, 0))  # Default yellow color for projectiles
         self.rect = self.image.get_rect(center=(x, y))
         self.direction = direction.normalize()  # Ensure the direction vector is normalized
         self.speed = speed
-        self.damage = 25  # Damage dealt by the projectile
-        self.mana_cost = 10  # Mana cost for shooting the projectile
-        self.screen_width = screen_width  # Store screen width
-        self.screen_height = screen_height  # Store screen height
+        self.screen_width = screen_width  # Store screen width for boundary checks
+        self.screen_height = screen_height  # Store screen height for boundary checks
+        self.damage = damage  # Damage dealt by the projectile
 
     def move(self, walls):
+        """Move the projectile and check for collisions with walls."""
         self.rect.x += self.direction.x * self.speed
         self.rect.y += self.direction.y * self.speed
 
         # Check for collision with walls
-        if self.check_collision(walls):
-            return False  # Return False if collision occurs
-
-        return True  # Return True if no collision occurs
-
-    def check_collision(self, walls):
         for wall in walls:
             if self.rect.colliderect(wall):
-                return True
-        return False
+                return False  # Collision, projectile should be removed
 
-    def draw(self, screen):
-        screen.blit(self.image, self.rect.topleft)
+        return True  # No collision, projectile continues moving
 
-    def is_off_screen(self):
-        return not (0 <= self.rect.x <= self.screen_width and 0 <= self.rect.y <= self.screen_height)
+    def is_off_screen(self, camera_offset):
+        """Check if the projectile is off the screen, considering the camera offset."""
+        screen_x = self.rect.x - camera_offset[0]
+        screen_y = self.rect.y - camera_offset[1]
+        return not (0 <= screen_x <= self.screen_width and 0 <= screen_y <= self.screen_height)
+
+    def draw(self, screen, camera_offset):
+        """Draw the projectile, taking the camera offset into account."""
+        screen_x = self.rect.x - camera_offset[0]
+        screen_y = self.rect.y - camera_offset[1]
+        screen.blit(self.image, (screen_x, screen_y))
     
 class Fireball(Projectile):
     def __init__(self, x, y, direction, screen_width, screen_height, speed=7, size=None):
@@ -61,6 +60,13 @@ class Fireball(Projectile):
         self.damage = 100  # Fireball deals more damage
         self.mana_cost = 30  # Fireball has a higher mana cost
 
+    def check_collision(self, walls):
+        """Check if the fireball collides with any walls."""
+        for wall in walls:
+            if self.rect.colliderect(wall):
+                return True
+        return False
+
     def move(self, walls, enemies, player):
         """Move the fireball and check for collisions with walls and enemies."""
         self.rect.x += self.direction.x * self.speed
@@ -76,7 +82,6 @@ class Fireball(Projectile):
                 enemy.take_damage(self.damage)
                 if enemy.health <= 0:  # Ensure enemy is removed if health is 0 or less
                     enemies.remove(enemy)
-                    #print("Enemy killed by fireball.")
                     player.gain_xp(50)  # Ensure XP is granted for killing the enemy
 
         return True  # Fireball keeps moving until it hits a wall
@@ -149,3 +154,20 @@ class MeleeAttack:
                     enemies.remove(enemy)
                     kills += 1
         return kills
+
+class EnemyProjectile(Projectile):
+    def __init__(self, x, y, direction, screen_width, screen_height, speed=5, size=None):
+        super().__init__(x, y, direction, screen_width, screen_height, speed, size, damage=15)  # Set enemy projectile damage to 15
+        self.image.fill((255, 0, 0))  # Red color for enemy projectile
+
+    def is_off_screen(self, camera_offset):
+        """Check if the projectile is off-screen, considering the camera offset."""
+        screen_x = self.rect.x - camera_offset[0]
+        screen_y = self.rect.y - camera_offset[1]
+        return not (0 <= screen_x <= self.screen_width and 0 <= screen_y <= self.screen_height)
+
+    def draw(self, screen, camera_offset):
+        """Draw the projectile, taking the camera offset into account."""
+        screen_x = self.rect.x - camera_offset[0]
+        screen_y = self.rect.y - camera_offset[1]
+        screen.blit(self.image, (screen_x, screen_y))
