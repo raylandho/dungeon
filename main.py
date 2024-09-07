@@ -51,7 +51,6 @@ def main():
     game_over = False
     
     lightning_in_progress = False
-    teleport_in_progress = False  # New flag to track teleportation state
     lightning_move_cooldown = 35  # Cooldown in milliseconds (adjust as needed)
     last_lightning_move_time = 0
 
@@ -77,7 +76,7 @@ def main():
                     print("Game restarted!")
                 continue 
 
-            if not lightning_in_progress and not teleport_in_progress:
+            if not lightning_in_progress:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_F11:
                         screen, current_mode = toggle_fullscreen(current_mode, screen, SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -93,11 +92,8 @@ def main():
                         inventory.toggle()
                     if event.key == inventory.keybindings["Teleport"] and not inventory.is_open:
                         if player.teleport_attack_unlocked:
-                            # Use teleport attack if unlocked
                             player.teleport_attack(screen, camera_offset, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y, dungeon, SCREEN_WIDTH, SCREEN_HEIGHT, enemies, projectiles)
                         else:
-                            # Use regular teleport if teleport attack is not unlocked
-                            new_x, new_y = dungeon.get_random_open_position()  # Example of how teleport could work
                             player.teleport(screen, camera_offset, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y, dungeon, SCREEN_WIDTH, SCREEN_HEIGHT, enemies, projectiles)
                     if event.key == inventory.keybindings["Lightning Strike"] and not inventory.is_open and player.lightning_unlocked:
                         player.start_lightning_strike(dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
@@ -114,13 +110,6 @@ def main():
                         elif event.key == pygame.K_RETURN:
                             inventory.select(player)
 
-        # Handle teleporting and lightning strike movements
-        if teleport_in_progress:
-            keys = pygame.key.get_pressed()
-            # Example teleportation handling code here...
-            # End teleportation
-            teleport_in_progress = False
-        
         if lightning_in_progress:
             keys = pygame.key.get_pressed()
             if current_time - last_lightning_move_time >= lightning_move_cooldown:
@@ -167,7 +156,7 @@ def main():
             clock.tick(FPS)
             continue
 
-        if not lightning_in_progress and not teleport_in_progress:
+        if not lightning_in_progress:
             keys = pygame.key.get_pressed()
             player.handle_movement(keys, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y, enemies)
             player.update_aim_direction(keys)
@@ -206,7 +195,23 @@ def main():
             else:
                 projectile.draw(screen, camera_offset)  # Draw with camera offset
 
-        # Always update and draw enemy projectiles, even during teleportation
+        # Update all enemies (ranged enemies shoot projectiles)
+        for enemy in enemies[:]:
+            enemy.update(player, dungeon.get_walls(), camera_offset, enemies)  # Pass the enemies list to prevent overlaps
+            
+            # Only handle projectiles for ranged enemies
+            if isinstance(enemy, RangedEnemy):
+                # Collect enemy projectiles into the enemy_projectiles list
+                for projectile in enemy.projectiles:
+                    enemy_projectiles.append(projectile)
+                enemy.projectiles = []  # Clear the enemy's own projectile list to prevent duplicates
+
+            # Remove enemy if dead
+            if enemy.is_dead():
+                player.gain_xp(50)
+                enemies.remove(enemy)
+
+        # Update and draw enemy projectiles
         for e_projectile in enemy_projectiles[:]:
             if not e_projectile.move(dungeon.get_walls()):  # Move the projectile and check for wall collisions
                 enemy_projectiles.remove(e_projectile)
@@ -225,22 +230,6 @@ def main():
 
             # Draw the projectile
             e_projectile.draw(screen, camera_offset)
-
-        # Update all enemies (ranged enemies shoot projectiles)
-        for enemy in enemies[:]:
-            enemy.update(player, dungeon.get_walls(), camera_offset)
-            
-            # Only handle projectiles for ranged enemies
-            if isinstance(enemy, RangedEnemy):
-                # Collect enemy projectiles into the enemy_projectiles list
-                for projectile in enemy.projectiles:
-                    enemy_projectiles.append(projectile)
-                enemy.projectiles = []  # Clear the enemy's own projectile list to prevent duplicates
-
-            # Remove enemy if dead
-            if enemy.is_dead():
-                player.gain_xp(50)
-                enemies.remove(enemy)
 
         # Draw all enemies
         for enemy in enemies:
