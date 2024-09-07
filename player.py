@@ -281,10 +281,15 @@ class Player:
         
     def start_lightning_strike(self, screen_width, screen_height):
         """Initialize lightning strike mode and freeze player movement."""
-        lightning_strike_mana_cost = 30
-        self.is_placing_lightning = True
-        self.lightning_strike = LightningStrike(self.rect.centerx, self.rect.centery, screen_width, screen_height)
-        self.use_mana(lightning_strike_mana_cost)
+        lightning_strike_mana_cost = 30  # Set the mana cost for lightning strike
+
+        # Check if player has enough mana
+        if self.mana >= lightning_strike_mana_cost:
+            self.is_placing_lightning = True
+            self.lightning_strike = LightningStrike(self.rect.centerx, self.rect.centery, screen_width, screen_height)
+            self.use_mana(lightning_strike_mana_cost)  # Deduct mana
+        else:
+            print("Not enough mana to use Lightning Strike!")
 
     def confirm_lightning_strike(self, enemies):
         """Confirm the lightning strike, damage enemies, and exit lightning mode."""
