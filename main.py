@@ -67,7 +67,7 @@ def main():
             if game_over:
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                     # Restart the game
-                    player.reset(player_start_x, player_start_y)  # Reset player state
+                    player.reset(player_start_x, player_start_y, inventory)  # Pass inventory to reset
                     ranged_enemies = [RangedEnemy(*dungeon.get_random_open_position(), SCREEN_WIDTH, SCREEN_HEIGHT) for _ in range(10)]
                     melee_enemies = [Enemy(*dungeon.get_random_open_position()) for _ in range(10)]
                     enemies = ranged_enemies + melee_enemies  # Respawn 10 ranged and 10 melee enemies
@@ -176,25 +176,33 @@ def main():
         dungeon.draw(screen, camera_offset)
 
         # Update and draw player projectiles
-        for projectile in projectiles[:]:
+        for projectile in projectiles[:]:  # Iterate over a copy of the list
+            projectile_removed = False  # Flag to track if projectile has been removed
+
             if isinstance(projectile, Fireball):
                 if not projectile.move(dungeon.get_walls(), enemies, player):  # Fireball with walls and enemies
                     projectiles.remove(projectile)
-            else:
-                if not projectile.move(dungeon.get_walls()):  # Projectile with walls only
-                    projectiles.remove(projectile)
-                else:
-                    for enemy in enemies[:]:
-                        if projectile.rect.colliderect(enemy.rect):
-                            if enemy.take_damage(projectile.damage):
-                                enemies.remove(enemy)
-                                player.gain_xp(50)
-                            projectiles.remove(projectile)
-                            break
+                    projectile_removed = True  # Mark projectile as removed
 
-            if projectile.is_off_screen(camera_offset):  # Check off-screen with camera offset
+            elif not projectile_removed and not projectile.move(dungeon.get_walls()):  # Regular projectile with walls only
                 projectiles.remove(projectile)
-            else:
+                projectile_removed = True
+
+            if not projectile_removed:
+                for enemy in enemies[:]:  # Check collisions with enemies
+                    if projectile.rect.colliderect(enemy.rect):
+                        if enemy.take_damage(projectile.damage):
+                            enemies.remove(enemy)
+                            player.gain_xp(50)
+                        projectiles.remove(projectile)
+                        projectile_removed = True
+                        break  # Exit loop after removing projectile
+
+            if not projectile_removed and projectile.is_off_screen(camera_offset):  # Check off-screen with camera offset
+                projectiles.remove(projectile)
+                projectile_removed = True
+
+            if not projectile_removed:
                 projectile.draw(screen, camera_offset)  # Draw with camera offset
 
         # Update all enemies (ranged enemies shoot projectiles)

@@ -164,3 +164,11 @@ class Inventory:
             print(f"Rebound {self.selected_keybind} to {pygame.key.name(event.key)}")
             self.rebinding_mode = False
             self.selected_keybind = None
+
+    def update_inventory(self, player):
+        """Update inventory UI based on player's current abilities and stats."""
+        self.unlocked_attacks["Fireball"] = player.fireball_unlocked
+        self.unlocked_attacks["Lightning Strike"] = player.lightning_unlocked
+        self.unlocked_attacks["Teleport Attack"] = player.teleport_attack_unlocked
+        self.points = player.points
+        print("Inventory updated after respawn.")

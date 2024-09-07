@@ -346,15 +346,27 @@ class Player:
         print("Player died!")
         self.is_dead = True  # Set player to dead state
 
-    def reset(self, x, y):
+    def reset(self, x, y, inventory):
         """Reset player to initial state when restarting the game."""
         self.rect.topleft = (x, y)
+        self.max_health = 100
         self.health = self.max_health
+        self.max_mana = 50
         self.mana = self.max_mana
-        self.is_dead = False
         self.xp = 0
+        self.xp_for_next_level = 100
         self.level = 1
-        print("Game restarted!")
+        self.points = 0
+        self.is_dead = False
+        self.fireball_unlocked = False
+        self.lightning_unlocked = False
+        self.teleport_attack_unlocked = False
+        self.is_placing_lightning = False
+        self.last_attack_time = pygame.time.get_ticks()
+        self.last_teleport_time = pygame.time.get_ticks()
+        print("Game restarted! Player state reset.")
+        # Refresh inventory to reflect reset state
+        inventory.update_inventory(self)
 
     def use_mana(self, amount):
         self.mana = max(0, self.mana - amount)
