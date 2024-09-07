@@ -3,7 +3,6 @@ Easy
 - right side of map bugged (can't replicate)
 
 Medium
-- Add A* to mob movement
 - Make ranged mob stop moving when they can shoot at player
 
 Hard

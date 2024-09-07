@@ -100,10 +100,12 @@ def main():
                         else:
                             player.teleport(screen, camera_offset, dungeon.get_walls(), dungeon.tiles_x, dungeon.tiles_y, dungeon, SCREEN_WIDTH, SCREEN_HEIGHT, enemies, projectiles)
                     if event.key == inventory.keybindings["Lightning Strike"] and not inventory.is_open and player.lightning_unlocked:
-                        player.start_lightning_strike(dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
-                        lightning_in_progress = True
-                        last_lightning_move_time = current_time  # Reset cooldown
-
+                        if player.mana >= 30:  # Ensure player has enough mana (adjust mana cost as needed)
+                            player.start_lightning_strike(dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
+                            lightning_in_progress = True
+                            last_lightning_move_time = current_time  # Reset cooldown
+                        else:
+                            print("Not enough mana for lightning strike!")  # Notify player of insufficient mana
                     if inventory.is_open:
                         if inventory.rebinding_mode:
                             inventory.process_keybinding(event)

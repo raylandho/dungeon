@@ -60,6 +60,9 @@ class Fireball(Projectile):
         self.damage = 100  # Fireball deals more damage
         self.mana_cost = 30  # Fireball has a higher mana cost
 
+        # Track enemies that have already been hit
+        self.enemies_hit = set()  # This set will track enemies that have been hit to avoid multiple hits
+
     def check_collision(self, walls):
         """Check if the fireball collides with any walls."""
         for wall in walls:
@@ -78,13 +81,13 @@ class Fireball(Projectile):
 
         # Check for collision with enemies and deal damage
         for enemy in enemies:
-            if self.rect.colliderect(enemy.rect):
-                enemy.take_damage(self.damage)
-                if enemy.health <= 0:  # Ensure enemy is removed if health is 0 or less
+            if self.rect.colliderect(enemy.rect) and enemy not in self.enemies_hit:
+                enemy.take_damage(self.damage)  # Inflict damage
+                self.enemies_hit.add(enemy)  # Mark the enemy as hit
+                if enemy.health <= 0:  # Ensure the enemy is removed if health is 0 or less
                     enemies.remove(enemy)
                     player.gain_xp(50)  # Grant XP for killing the enemy
 
-        # Continue moving even after hitting enemies (don't return False here)
         return True  # Fireball keeps moving until it hits a wall or goes off-screen
 
 class LightningStrike:
