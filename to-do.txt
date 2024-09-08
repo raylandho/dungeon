@@ -1,6 +1,7 @@
 Easy
 - Xp bar bugged after leveling (fixes after exiting level screen) (only when you gain way too much xp at once)
 - right side of map bugged (can't replicate)
+- Melee attack range inconsistent with bosses, make attack 4x2 instead of 2x2 to hit corners
 
 Medium
 - Make ranged mob stop moving when they can shoot at player

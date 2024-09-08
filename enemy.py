@@ -77,7 +77,7 @@ class Enemy:
         return False
 
     def check_collision_with_player(self, new_pos, player_rect):
-        """Check for collision with the player."""
+        """Check for collision with the player's entire bounding box."""
         future_rect = pygame.Rect(new_pos, (self.size, self.size))
         return future_rect.colliderect(player_rect)
 
@@ -152,15 +152,16 @@ class RangedEnemy(Enemy):
 class BossMeleeEnemy(Enemy):
     def __init__(self, x, y):
         super().__init__(x, y)
-        self.size = 80  # Boss is twice the size of a regular enemy
+        self.size = 80  # Boss size is 2x2 tiles (assuming each tile is 40x40)
         self.image = pygame.Surface((self.size, self.size))
         self.image.fill((0, 0, 255))  # Blue for boss enemies
         self.original_color = (0, 0, 255)  # Original color is blue
-        self.health = 200  # Much higher health
-        self.speed = 3  # Faster than regular enemies
+        self.health = 200  # Higher health for the boss
+        self.speed = 3  # Speed value for boss
         self.melee_damage = 25  # Stronger melee attacks
-        self.melee_range = 70  # Longer attack range
-        self.attack_cooldown = 800  # Slightly shorter cooldown between attacks
+        self.melee_range = 70  # Melee attack range
+        self.attack_cooldown = 800  # Cooldown between attacks
+        self.rect = pygame.Rect(x, y, self.size, self.size) 
 
     def take_damage(self, amount):
         """Reduce the enemy's health by a specified amount and trigger the flash effect."""
@@ -171,7 +172,62 @@ class BossMeleeEnemy(Enemy):
             return True  # Return True if the boss dies
         return False
 
+    def move_towards_player(self, player_rect, walls, enemies, gap=5):
+        """Move the enemy towards the player without overlapping other enemies or the player, leaving a gap."""
+        dx = player_rect.centerx - self.rect.centerx
+        dy = player_rect.centery - self.rect.centery
+
+        if abs(dx) > abs(dy):
+            # Move horizontally
+            new_x = self.rect.x + (self.speed if dx > 0 else -self.speed)
+            new_pos = (new_x, self.rect.y)
+
+            # Ensure there is a gap between the boss and the player
+            if abs(player_rect.centerx - (self.rect.centerx + (self.speed if dx > 0 else -self.speed))) < self.size // 2 + gap:
+                new_pos = (self.rect.x, self.rect.y)  # Stop movement if within gap range
+        else:
+            # Move vertically
+            new_y = self.rect.y + (self.speed if dy > 0 else -self.speed)
+            new_pos = (self.rect.x, new_y)
+
+            # Ensure there is a gap between the boss and the player
+            if abs(player_rect.centery - (self.rect.centery + (self.speed if dy > 0 else -self.speed))) < self.size // 2 + gap:
+                new_pos = (self.rect.x, self.rect.y)  # Stop movement if within gap range
+
+        # Prevent overlapping with walls, other enemies, and the player
+        if not self.check_collision(new_pos, walls, enemies) and not self.check_collision_with_player(player_rect, gap):
+            self.rect.topleft = new_pos
+
+    def check_collision_with_player(self, player_rect, gap=5):
+        """Check for collision with the player, leaving a small gap."""
+        # Check collision with a small gap around the player
+        boss_rect = pygame.Rect(self.rect.x, self.rect.y, self.size, self.size)
+        expanded_player_rect = player_rect.inflate(gap * 2, gap * 2)  # Expand player's rect by the gap
+
+        # If the boss is close to the player but not touching
+        return boss_rect.colliderect(expanded_player_rect)
+
     def update(self, player, walls, camera_offset, enemies):
         """Update boss logic."""
         super().update(player, walls, camera_offset, enemies)
-        # Additional logic for boss can be added here if needed
+        # Call melee attack to check if the player is in range and deal damage
+        self.melee_attack(player)
+
+    def melee_attack(self, player):
+        """Perform a melee attack on the player, covering all adjacent tiles."""
+        current_time = pygame.time.get_ticks()
+
+        # Define the attack range: covering one tile left, one tile up, two tiles down, and two tiles right
+        boss_attack_range = pygame.Rect(
+            self.rect.x - TILE_SIZE,  # One tile to the left
+            self.rect.y - TILE_SIZE,  # One tile above
+            self.size + TILE_SIZE * 2,  # Cover two tiles to the right
+            self.size + TILE_SIZE * 2   # Cover two tiles below
+        )
+
+        # Check if the player is within this larger attack range and if the cooldown is over
+        if boss_attack_range.colliderect(player.rect) and current_time - self.last_attack_time >= self.attack_cooldown:
+            # Perform attack
+            player.take_damage(self.melee_damage)
+            self.last_attack_time = current_time  # Update last attack time
+            print(f"Boss dealt {self.melee_damage} damage to the player!")
