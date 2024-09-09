@@ -4,20 +4,52 @@ from settings import PLAYER_SIZE, TILE_SIZE
 
 class Projectile:
     def __init__(self, x, y, direction, screen_width, screen_height, speed=5, size=None, damage=25):
-        self.size = size or TILE_SIZE // 2  # Default size based on tile size
-        self.image = pygame.Surface((self.size, self.size))
-        self.image.fill((255, 255, 0))  # Default yellow color for projectiles
-        self.rect = self.image.get_rect(center=(x, y))
+        self.size = size or TILE_SIZE  # Default size based on tile size
+
+        # Load both projectile images for animation
+        self.projectile_images = [
+            pygame.transform.scale(pygame.image.load('assets/energy.png').convert_alpha(), (self.size, self.size)),
+            pygame.transform.scale(pygame.image.load('assets/energy2.png').convert_alpha(), (self.size, self.size))
+        ]
+
+        self.rect = self.projectile_images[0].get_rect(center=(x, y))
         self.direction = direction.normalize()  # Ensure the direction vector is normalized
         self.speed = speed
         self.screen_width = screen_width  # Store screen width for boundary checks
         self.screen_height = screen_height  # Store screen height for boundary checks
         self.damage = damage  # Damage dealt by the projectile
 
+        # Animation variables
+        self.animation_timer = 0
+        self.animation_interval = 200  # Switch image every 200 milliseconds
+        self.current_image_index = 0
+        self.image = self.rotate_image_by_direction(self.projectile_images[self.current_image_index], self.direction)  # Initialize with rotated image
+
+    def rotate_image_by_direction(self, image, direction):
+        """Rotate the image based on the direction of movement."""
+        # Calculate the angle of rotation in degrees
+        angle = math.degrees(math.atan2(-direction.y, direction.x))  # Negative y because Pygame's y-axis is inverted
+        adjusted_angle = angle - 225  # Adjust by 225 degrees to account for the initial bottom-left orientation
+        rotated_image = pygame.transform.rotate(image, adjusted_angle)
+        return rotated_image
+
+    def update_animation(self):
+        """Switch between projectile images to create an animation."""
+        current_time = pygame.time.get_ticks()
+        if current_time - self.animation_timer > self.animation_interval:
+            self.animation_timer = current_time
+            self.current_image_index = (self.current_image_index + 1) % len(self.projectile_images)  # Toggle between the two images
+
+        # Rotate the current image based on the direction of the projectile
+        self.image = self.rotate_image_by_direction(self.projectile_images[self.current_image_index], self.direction)
+
     def move(self, walls):
         """Move the projectile and check for collisions with walls."""
         self.rect.x += self.direction.x * self.speed
         self.rect.y += self.direction.y * self.speed
+
+        # Update the projectile animation
+        self.update_animation()
 
         # Check for collision with walls
         for wall in walls:
@@ -36,7 +68,7 @@ class Projectile:
         """Draw the projectile, taking the camera offset into account."""
         screen_x = self.rect.x - camera_offset[0]
         screen_y = self.rect.y - camera_offset[1]
-        screen.blit(self.image, (screen_x, screen_y))
+        screen.blit(self.image, (screen_x, screen_y))  # Use the rotated image
     
 class Fireball(Projectile):
     def __init__(self, x, y, direction, screen_width, screen_height, speed=7, size=None):
@@ -191,11 +223,51 @@ class MeleeAttack:
 
 class EnemyProjectile(Projectile):
     def __init__(self, x, y, direction, screen_width, screen_height, speed=5, size=None):
-        super().__init__(x, y, direction, screen_width, screen_height, speed, size, damage=15)  # Set enemy projectile damage to 15
-        self.image.fill((255, 0, 0))  # Red color for enemy projectile
+        self.size = size or TILE_SIZE // 2  # Default size based on tile size
+
+        # Load both projectile images for animation
+        self.projectile_images = [
+            pygame.transform.scale(pygame.image.load('assets/energy.png').convert_alpha(), (self.size, self.size)),
+            pygame.transform.scale(pygame.image.load('assets/energy2.png').convert_alpha(), (self.size, self.size))
+        ]
+
+        self.rect = self.projectile_images[0].get_rect(center=(x, y))
+        self.direction = direction.normalize()  # Ensure the direction vector is normalized
+        self.speed = speed
+        self.screen_width = screen_width  # Store screen width for boundary checks
+        self.screen_height = screen_height  # Store screen height for boundary checks
+        self.damage = 15  # Set enemy projectile damage to 15
+
+        # Animation variables
+        self.animation_timer = 0
+        self.animation_interval = 200  # Switch image every 200 milliseconds
+        self.current_image_index = 0
+
+    def update_animation(self):
+        """Switch between projectile images to create an animation."""
+        current_time = pygame.time.get_ticks()
+        if current_time - self.animation_timer > self.animation_interval:
+            self.animation_timer = current_time
+            self.current_image_index = (self.current_image_index + 1) % len(self.projectile_images)  # Toggle between the two images
+            self.image = self.projectile_images[self.current_image_index]
+
+    def move(self, walls):
+        """Move the projectile and check for collisions with walls."""
+        self.rect.x += self.direction.x * self.speed
+        self.rect.y += self.direction.y * self.speed
+
+        # Update the projectile animation
+        self.update_animation()
+
+        # Check for collision with walls
+        for wall in walls:
+            if self.rect.colliderect(wall):
+                return False  # Collision, projectile should be removed
+
+        return True  # No collision, projectile continues moving
 
     def is_off_screen(self, camera_offset):
-        """Check if the projectile is off-screen, considering the camera offset."""
+        """Check if the projectile is off the screen, considering the camera offset."""
         screen_x = self.rect.x - camera_offset[0]
         screen_y = self.rect.y - camera_offset[1]
         return not (0 <= screen_x <= self.screen_width and 0 <= screen_y <= self.screen_height)
@@ -204,4 +276,4 @@ class EnemyProjectile(Projectile):
         """Draw the projectile, taking the camera offset into account."""
         screen_x = self.rect.x - camera_offset[0]
         screen_y = self.rect.y - camera_offset[1]
-        screen.blit(self.image, (screen_x, screen_y))
+        screen.blit(self.projectile_images[self.current_image_index], (screen_x, screen_y))
