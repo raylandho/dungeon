@@ -86,7 +86,7 @@ class Player:
 
         # Update the last teleport time
         self.last_teleport_time = current_time
-        print("Teleport successful")
+        #print("Teleport successful")
 
     def teleport_attack(self, screen, camera_offset, walls, dungeon_width, dungeon_height, dungeon, screen_width, screen_height, enemies, projectiles):
         """Teleport attack method which moves the player and damages enemies."""

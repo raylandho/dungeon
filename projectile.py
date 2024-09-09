@@ -223,12 +223,12 @@ class MeleeAttack:
 
 class EnemyProjectile(Projectile):
     def __init__(self, x, y, direction, screen_width, screen_height, speed=5, size=None):
-        self.size = size or TILE_SIZE // 2  # Default size based on tile size
+        self.size = size or TILE_SIZE // 1.2  # Default size based on tile size
 
         # Load both projectile images for animation
         self.projectile_images = [
-            pygame.transform.scale(pygame.image.load('assets/energy.png').convert_alpha(), (self.size, self.size)),
-            pygame.transform.scale(pygame.image.load('assets/energy2.png').convert_alpha(), (self.size, self.size))
+            pygame.transform.scale(pygame.image.load('assets/red.png').convert_alpha(), (self.size, self.size)),
+            pygame.transform.scale(pygame.image.load('assets/red2.png').convert_alpha(), (self.size, self.size))
         ]
 
         self.rect = self.projectile_images[0].get_rect(center=(x, y))
@@ -242,6 +242,15 @@ class EnemyProjectile(Projectile):
         self.animation_timer = 0
         self.animation_interval = 200  # Switch image every 200 milliseconds
         self.current_image_index = 0
+        self.image = self.rotate_image_by_direction(self.projectile_images[self.current_image_index], self.direction)  # Initialize with rotated image
+
+    def rotate_image_by_direction(self, image, direction):
+        """Rotate the image based on the direction of movement, accounting for the initial bottom-left orientation."""
+        # Calculate the angle of rotation in degrees
+        angle = math.degrees(math.atan2(-direction.y, direction.x))  # Negative y because Pygame's y-axis is inverted
+        adjusted_angle = angle - 225  # Adjust by 225 degrees to account for the initial bottom-left orientation
+        rotated_image = pygame.transform.rotate(image, adjusted_angle)
+        return rotated_image
 
     def update_animation(self):
         """Switch between projectile images to create an animation."""
@@ -249,7 +258,9 @@ class EnemyProjectile(Projectile):
         if current_time - self.animation_timer > self.animation_interval:
             self.animation_timer = current_time
             self.current_image_index = (self.current_image_index + 1) % len(self.projectile_images)  # Toggle between the two images
-            self.image = self.projectile_images[self.current_image_index]
+
+        # Rotate the current image based on the direction of the projectile
+        self.image = self.rotate_image_by_direction(self.projectile_images[self.current_image_index], self.direction)
 
     def move(self, walls):
         """Move the projectile and check for collisions with walls."""
@@ -276,4 +287,4 @@ class EnemyProjectile(Projectile):
         """Draw the projectile, taking the camera offset into account."""
         screen_x = self.rect.x - camera_offset[0]
         screen_y = self.rect.y - camera_offset[1]
-        screen.blit(self.projectile_images[self.current_image_index], (screen_x, screen_y))
+        screen.blit(self.image, (screen_x, screen_y))  # Use the rotated image
