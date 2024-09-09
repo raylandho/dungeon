@@ -291,13 +291,33 @@ class Player:
         else:
             print("Not enough mana to use Lightning Strike!")
 
-    def confirm_lightning_strike(self, enemies):
+    def confirm_lightning_strike(self, enemies, screen, camera_offset): 
         """Confirm the lightning strike, damage enemies, and exit lightning mode."""
         if self.lightning_strike:
+            self.play_lightning_animation(screen, camera_offset)
             struck_enemies = self.lightning_strike.check_enemies_in_range(enemies, self)
             print(f"Lightning Strike hit {struck_enemies} enemies!")
         self.is_placing_lightning = False
         self.lightning_strike = None
+    
+    def play_lightning_animation(self, screen, camera_offset):
+        """Play the 4-part lightning strike animation in quick succession."""
+        lightning_images = [
+            pygame.transform.scale(pygame.image.load('assets/lightning.png').convert_alpha(), (TILE_SIZE * 2, TILE_SIZE * 2)),
+            pygame.transform.scale(pygame.image.load('assets/lightning2.png').convert_alpha(), (TILE_SIZE * 2, TILE_SIZE * 2)),
+            pygame.transform.scale(pygame.image.load('assets/lightning3.png').convert_alpha(), (TILE_SIZE * 2, TILE_SIZE * 2)),
+            pygame.transform.scale(pygame.image.load('assets/lightning4.png').convert_alpha(), (TILE_SIZE * 2, TILE_SIZE * 2))
+        ]
+
+        # Target position for the animation
+        screen_x = self.lightning_strike.target_position.x - camera_offset[0] - TILE_SIZE
+        screen_y = self.lightning_strike.target_position.y - camera_offset[1] - TILE_SIZE
+
+        # Loop through each frame and display it with a slight delay
+        for image in lightning_images:
+            screen.blit(image, (screen_x, screen_y))
+            pygame.display.flip()  # Update the display
+            pygame.time.delay(100)  # Delay for 100 milliseconds per frame (adjust as needed)
 
     def move_lightning_strike_target(self, direction):
         """Move the lightning strike targeting circle if in lightning strike mode."""

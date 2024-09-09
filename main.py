@@ -155,7 +155,7 @@ def main():
                     player.move_lightning_strike_target("down")
                     last_lightning_move_time = current_time
                 if keys[pygame.K_RETURN]:  # Confirm lightning strike
-                    player.confirm_lightning_strike(enemies)
+                    player.confirm_lightning_strike(enemies, screen, camera_offset)
                     lightning_in_progress = False
         
         if player.is_dead:
