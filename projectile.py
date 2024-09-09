@@ -1,4 +1,5 @@
 import pygame
+import math
 from settings import PLAYER_SIZE, TILE_SIZE
 
 class Projectile:
@@ -53,15 +54,42 @@ class Fireball(Projectile):
 
         super().__init__(fireball_x, fireball_y, direction, screen_width, screen_height, speed, self.size)
 
-        # Set up the fireball's appearance
-        self.image = pygame.Surface((self.size, self.size), pygame.SRCALPHA)  # Use SRCALPHA for transparency
-        self.image.fill((0, 0, 0, 0))  # Fully transparent background
-        pygame.draw.circle(self.image, (255, 69, 0), (self.size // 2, self.size // 2), self.size // 2)  # Draw a fireball (orange circle)
+         # Load both fireball images for animation
+        self.fireball_images = [
+            pygame.transform.scale(pygame.image.load('assets/fireball.png').convert_alpha(), (self.size, self.size)),
+            pygame.transform.scale(pygame.image.load('assets/fireball2.png').convert_alpha(), (self.size, self.size))
+        ]
+        
         self.damage = 100  # Fireball deals more damage
         self.mana_cost = 30  # Fireball has a higher mana cost
 
         # Track enemies that have already been hit
         self.enemies_hit = set()  # This set will track enemies that have been hit to avoid multiple hits
+        
+        # Animation variables
+        self.animation_timer = 0
+        self.animation_interval = 200  # Switch image every 200 milliseconds
+        self.current_image_index = 0
+        
+        # Rotate the initial fireball image based on direction
+        self.image = self.rotate_image_by_direction(self.fireball_images[self.current_image_index], direction)
+        
+    def rotate_image_by_direction(self, image, direction):
+        """Rotate the image based on the direction of movement."""
+        # Calculate the angle of rotation in degrees
+        angle = math.degrees(math.atan2(-direction.y, direction.x))  # Negative y because Pygame's y-axis is inverted
+        adjusted_angle = angle - 225
+        rotated_image = pygame.transform.rotate(image, adjusted_angle)
+        return rotated_image
+    
+    def update_animation(self):
+        """Switch between fireball images to create an animation."""
+        current_time = pygame.time.get_ticks()
+        if current_time - self.animation_timer > self.animation_interval:
+            self.animation_timer = current_time
+            self.current_image_index = (self.current_image_index + 1) % len(self.fireball_images)  # Toggle between the two images
+            # Rotate the new image based on direction
+            self.image = self.rotate_image_by_direction(self.fireball_images[self.current_image_index], self.direction)
 
     def check_collision(self, walls):
         """Check if the fireball collides with any walls."""
@@ -74,6 +102,8 @@ class Fireball(Projectile):
         """Move the fireball and check for collisions with walls and enemies."""
         self.rect.x += self.direction.x * self.speed
         self.rect.y += self.direction.y * self.speed
+        
+        self.update_animation()
 
         # Check for collision with walls
         if self.check_collision(walls):
