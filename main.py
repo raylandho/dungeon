@@ -1,5 +1,6 @@
 import pygame
 import sys
+import random
 from settings import TILE_SIZE, FPS
 from player import Player
 from projectile import Projectile, Fireball, EnemyProjectile  # Import EnemyProjectile
@@ -39,11 +40,11 @@ def main():
     
     dungeon.clear_spawn_area(dungeon.layout, player_start_x // TILE_SIZE, player_start_y // TILE_SIZE)
 
-    # Initialize 10 ranged and 10 melee enemies with valid spawn positions
-    ranged_enemies = [RangedEnemy(*dungeon.get_random_open_position(), SCREEN_WIDTH, SCREEN_HEIGHT) for _ in range(3)]
-    melee_enemies = [Enemy(*dungeon.get_random_open_position()) for _ in range(10)]
-    boss_melee_enemies = [BossMeleeEnemy(*dungeon.get_random_open_position()) for _ in range(2)]
-    enemies = ranged_enemies + melee_enemies + boss_melee_enemies # Combine both lists into the main enemies list
+     # Round-related variables
+    current_round = 1
+    enemies_per_round = 5  # Start with 5 enemies in round 1
+    enemies = []  # Empty list of enemies that will be populated at the start of each round
+    enemies_defeated = 0  # Keep track of how many enemies have been defeated
 
     projectiles = []
     enemy_projectiles = []  # New list to hold enemy projectiles
@@ -57,6 +58,29 @@ def main():
     lightning_move_cooldown = 35  # Cooldown in milliseconds (adjust as needed)
     last_lightning_move_time = 0
 
+    def spawn_enemies():
+        """Spawn enemies based on the current round."""
+        nonlocal enemies, enemies_per_round
+        # Increase difficulty each round by adding more enemies
+        num_ranged = random.randint(1, current_round // 2 + 1)
+        num_melee = random.randint(2, current_round + 2)
+        num_boss = 1 + current_round // 3 # Add a boss enemy every 3 rounds
+
+        ranged_enemies = [RangedEnemy(*dungeon.get_random_open_position(), SCREEN_WIDTH, SCREEN_HEIGHT) for _ in range(num_ranged)]
+        melee_enemies = [Enemy(*dungeon.get_random_open_position()) for _ in range(num_melee)]
+        boss_melee_enemies = [BossMeleeEnemy(*dungeon.get_random_open_position()) for _ in range(num_boss)]
+        enemies = ranged_enemies + melee_enemies + boss_melee_enemies
+
+    def check_for_next_round():
+        """Check if all enemies are defeated and advance to the next round."""
+        nonlocal current_round, enemies_per_round, enemies_defeated
+        if not enemies:
+            current_round += 1  # Move to the next round
+            enemies_defeated = 0
+            spawn_enemies()
+    
+    spawn_enemies()
+
     running = True
     while running:
         current_time = pygame.time.get_ticks()
@@ -69,10 +93,9 @@ def main():
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                     # Restart the game
                     player.reset(player_start_x, player_start_y, inventory)  # Pass inventory to reset
-                    ranged_enemies = [RangedEnemy(*dungeon.get_random_open_position(), SCREEN_WIDTH, SCREEN_HEIGHT) for _ in range(3)]
-                    melee_enemies = [Enemy(*dungeon.get_random_open_position()) for _ in range(10)]
-                    boss_melee_enemies = [BossMeleeEnemy(*dungeon.get_random_open_position()) for _ in range(2)]
-                    enemies = ranged_enemies + melee_enemies + boss_melee_enemies  # Respawn 10 ranged and 10 melee enemies
+                    current_round = 1
+                    enemies_defeated = 0
+                    spawn_enemies()
                     projectiles.clear()  # Clear all projectiles
                     enemy_projectiles.clear()  # Clear enemy projectiles
                     game_over = False
@@ -161,6 +184,8 @@ def main():
             pygame.display.flip()
             clock.tick(FPS)
             continue
+        
+        check_for_next_round()
 
         if not lightning_in_progress:
             keys = pygame.key.get_pressed()
@@ -200,7 +225,10 @@ def main():
                     if projectile.rect.colliderect(enemy.rect):
                         if enemy.take_damage(projectile.damage):
                             enemies.remove(enemy)
-                            player.gain_xp(50)
+                            if isinstance(enemy, BossMeleeEnemy):
+                                player.gain_xp(150)
+                            else:
+                                player.gain_xp(50)
                         projectiles.remove(projectile)
                         projectile_removed = True
                         break  # Exit loop after removing projectile
@@ -225,8 +253,11 @@ def main():
 
             # Remove enemy if dead
             if enemy.is_dead():
-                player.gain_xp(50)
-                enemies.remove(enemy)
+                if isinstance(enemy, BossMeleeEnemy):
+                    player.gain_xp(150)  # Bosses drop 150 XP
+                else:
+                    player.gain_xp(50)  # Regular enemies drop 50 XP
+                enemies.remove(enemy)  # Remove enemy from the list
 
         # Update and draw enemy projectiles
         for e_projectile in enemy_projectiles[:]:
@@ -253,6 +284,11 @@ def main():
             enemy.draw(screen, camera_offset)
 
         player.draw(screen, camera_offset)
+        
+        # Draw round number on the top right corner
+        font = pygame.font.SysFont(None, 48)
+        round_text = font.render(f"Round: {current_round}", True, (255, 255, 255))
+        screen.blit(round_text, (SCREEN_WIDTH - 200, 10))
 
         pygame.display.flip()
         clock.tick(FPS)

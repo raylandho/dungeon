@@ -1,7 +1,7 @@
 Easy
 - Xp bar bugged after leveling (fixes after exiting level screen) (only when you gain way too much xp at once)
 - right side of map bugged (can't replicate)
-- Melee attack range inconsistent with bosses, make attack 4x2 instead of 2x2 to hit corners
+- boss enemies should give more than 50 xp
 
 Medium
 - Make ranged mob stop moving when they can shoot at player
@@ -10,7 +10,6 @@ Hard
 - Add artwork
 - Add soundtrack
 - Add sound effects
-- Add levels + final boss or infinite increasing dungeon
 
 Final Additions
 - Increase map size and add more generated terrain
