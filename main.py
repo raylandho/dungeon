@@ -287,7 +287,7 @@ def main():
         
         # Draw round number on the top right corner
         font = pygame.font.SysFont(None, 48)
-        round_text = font.render(f"Round: {current_round}", True, (255, 255, 255))
+        round_text = font.render(f"Round: {current_round}", True, (0, 0, 0))
         screen.blit(round_text, (SCREEN_WIDTH - 200, 10))
 
         pygame.display.flip()

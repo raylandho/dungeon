@@ -7,7 +7,12 @@ class Dungeon:
         self.tiles_x = width_in_tiles
         self.tiles_y = height_in_tiles
         # Load and scale the wall tile image
-        self.wall_tile_image = pygame.transform.scale(pygame.image.load('assets/wall.png').convert(), (TILE_SIZE, TILE_SIZE))
+        wall_tile1 = pygame.transform.scale(pygame.image.load('assets/wall.png').convert(), (TILE_SIZE, TILE_SIZE))
+        wall_tile2 = pygame.transform.scale(pygame.image.load('assets/wall2.png').convert(), (TILE_SIZE, TILE_SIZE))
+        wall_tile3 = pygame.transform.scale(pygame.image.load('assets/wall3.png').convert(), (TILE_SIZE, TILE_SIZE))
+        wall_tile4 = pygame.transform.scale(pygame.image.load('assets/wall4.png').convert(), (TILE_SIZE, TILE_SIZE))
+        self.wall_tiles = [wall_tile1, wall_tile2, wall_tile3, wall_tile4]
+        self.wall_tile_map = self.generate_wall_tile_map()
         # Load and scale both ground tile images
         ground_tile1 = pygame.transform.scale(pygame.image.load('assets/dirt.png').convert(), (TILE_SIZE, TILE_SIZE))
         ground_tile2 = pygame.transform.scale(pygame.image.load('assets/dirt2.png').convert(), (TILE_SIZE, TILE_SIZE))
@@ -33,6 +38,13 @@ class Dungeon:
         for row in range(self.tiles_y):
             ground_tile_map.append([random.choice(self.ground_tiles) for _ in range(self.tiles_x)])
         return ground_tile_map
+    
+    def generate_wall_tile_map(self):
+        """Generate a random wall tile for each wall position in the dungeon."""
+        wall_tile_map = []
+        for row in range(self.tiles_y):
+            wall_tile_map.append([random.choice(self.wall_tiles) for _ in range(self.tiles_x)])
+        return wall_tile_map
     
     def add_structures(self, layout):
         # Define some predefined shapes
@@ -130,7 +142,8 @@ class Dungeon:
                 screen_y = row_index * TILE_SIZE - camera_offset[1]
 
                 if tile == "1":
-                    screen.blit(self.wall_tile_image, (screen_x, screen_y))
+                    wall_tile = self.wall_tile_map[row_index][col_index]  # Get the pre-selected wall tile
+                    screen.blit(wall_tile, (screen_x, screen_y))
                 elif tile == "0":
                     ground_tile = self.ground_tile_map[row_index][col_index]
                     screen.blit(ground_tile, (screen_x, screen_y))

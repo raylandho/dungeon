@@ -209,12 +209,12 @@ class Player:
 
     def draw_xp_text(self, screen):
         xp_text = f"XP: {self.xp} / {self.xp_for_next_level}"
-        xp_surface = self.font.render(xp_text, True, (255, 255, 255))
+        xp_surface = self.font.render(xp_text, True, (0, 0, 0))
         screen.blit(xp_surface, (10, 70))
 
     def draw_level_text(self, screen):
         level_text = f"Level: {self.level}"
-        level_surface = self.font.render(level_text, True, (255, 255, 255))
+        level_surface = self.font.render(level_text, True, (0, 0, 0))
         screen.blit(level_surface, (10, 100))
 
     def draw_aim_arrow(self, screen, camera_offset):
@@ -235,7 +235,7 @@ class Player:
                 (end_pos[0] + arrowhead_size * self.aim_direction.rotate(135).x, end_pos[1] + arrowhead_size * self.aim_direction.rotate(135).y),
                 (end_pos[0] + arrowhead_size * self.aim_direction.rotate(-135).x, end_pos[1] + arrowhead_size * self.aim_direction.rotate(-135).y)
             ]
-            pygame.draw.polygon(screen, (255, 255, 255), [end_pos] + arrowhead_points)
+            pygame.draw.polygon(screen, (0, 0, 0), [end_pos] + arrowhead_points)
 
     def melee_attack(self, enemies):
         current_time = pygame.time.get_ticks()
