@@ -286,6 +286,7 @@ class Player:
         # Check if player has enough mana
         if self.mana >= lightning_strike_mana_cost:
             self.is_placing_lightning = True
+            # Start lightning strike at the player's position initially
             self.lightning_strike = LightningStrike(self.rect.centerx, self.rect.centery, screen_width, screen_height)
             self.use_mana(lightning_strike_mana_cost)  # Deduct mana
         else:
@@ -294,6 +295,7 @@ class Player:
     def confirm_lightning_strike(self, enemies, screen, camera_offset): 
         """Confirm the lightning strike, damage enemies, and exit lightning mode."""
         if self.lightning_strike:
+            # Play the animation where the circle is
             self.play_lightning_animation(screen, camera_offset)
             struck_enemies = self.lightning_strike.check_enemies_in_range(enemies, self)
             print(f"Lightning Strike hit {struck_enemies} enemies!")
@@ -303,21 +305,21 @@ class Player:
     def play_lightning_animation(self, screen, camera_offset):
         """Play the 4-part lightning strike animation in quick succession."""
         lightning_images = [
-            pygame.transform.scale(pygame.image.load('assets/lightning.png').convert_alpha(), (TILE_SIZE * 2, TILE_SIZE * 2)),
-            pygame.transform.scale(pygame.image.load('assets/lightning2.png').convert_alpha(), (TILE_SIZE * 2, TILE_SIZE * 2)),
-            pygame.transform.scale(pygame.image.load('assets/lightning3.png').convert_alpha(), (TILE_SIZE * 2, TILE_SIZE * 2)),
-            pygame.transform.scale(pygame.image.load('assets/lightning4.png').convert_alpha(), (TILE_SIZE * 2, TILE_SIZE * 2))
+            pygame.transform.scale(pygame.image.load('assets/lightning.png').convert_alpha(), (TILE_SIZE * 4, TILE_SIZE * 4)),
+            pygame.transform.scale(pygame.image.load('assets/lightning2.png').convert_alpha(), (TILE_SIZE * 4, TILE_SIZE * 4)),
+            pygame.transform.scale(pygame.image.load('assets/lightning3.png').convert_alpha(), (TILE_SIZE * 4, TILE_SIZE * 4)),
+            pygame.transform.scale(pygame.image.load('assets/lightning4.png').convert_alpha(), (TILE_SIZE * 4, TILE_SIZE * 4))
         ]
 
-        # Target position for the animation
-        screen_x = self.lightning_strike.target_position.x - camera_offset[0] - TILE_SIZE
-        screen_y = self.lightning_strike.target_position.y - camera_offset[1] - TILE_SIZE
+        # Calculate the position where the animation should play (center it on the lightning strike target)
+        screen_x = self.lightning_strike.target_position.x - camera_offset[0] - (TILE_SIZE * 2)  # Centering the image
+        screen_y = self.lightning_strike.target_position.y - camera_offset[1] - (TILE_SIZE * 2)  # Centering the image
 
         # Loop through each frame and display it with a slight delay
         for image in lightning_images:
             screen.blit(image, (screen_x, screen_y))
             pygame.display.flip()  # Update the display
-            pygame.time.delay(100)  # Delay for 100 milliseconds per frame (adjust as needed)
+            pygame.time.delay(100)
 
     def move_lightning_strike_target(self, direction):
         """Move the lightning strike targeting circle if in lightning strike mode."""
