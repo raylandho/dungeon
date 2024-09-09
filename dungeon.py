@@ -8,6 +8,7 @@ class Dungeon:
         self.tiles_y = height_in_tiles
         self.tile_image = pygame.Surface((TILE_SIZE, TILE_SIZE))
         self.tile_image.fill((139, 69, 19))  # Brown tiles for walls
+        self.ground_tile_image = pygame.transform.scale(pygame.image.load('assets/dirt3.png').convert(), (TILE_SIZE, TILE_SIZE))  # Image for ground tiles
         self.font = pygame.font.SysFont(None, 24)  # Font for rendering numbers
         self.layout = self.generate_dungeon()
 
@@ -118,6 +119,8 @@ class Dungeon:
 
                 if tile == "1":
                     screen.blit(self.tile_image, (screen_x, screen_y))
+                elif tile == "0":
+                    screen.blit(self.ground_tile_image, (screen_x, screen_y))  # Draw ground
                 '''
                 # Render the tile's value (0 or 1) on top of the tile
                 text_surface = self.font.render(tile, True, (255, 255, 255))
