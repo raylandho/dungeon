@@ -8,7 +8,12 @@ class Dungeon:
         self.tiles_y = height_in_tiles
         # Load and scale the wall tile image
         self.wall_tile_image = pygame.transform.scale(pygame.image.load('assets/wall.png').convert(), (TILE_SIZE, TILE_SIZE))
-        self.ground_tile_image = pygame.transform.scale(pygame.image.load('assets/dirt3.png').convert(), (TILE_SIZE, TILE_SIZE))  # Image for ground tiles
+        # Load and scale both ground tile images
+        ground_tile1 = pygame.transform.scale(pygame.image.load('assets/dirt.png').convert(), (TILE_SIZE, TILE_SIZE))
+        ground_tile2 = pygame.transform.scale(pygame.image.load('assets/dirt2.png').convert(), (TILE_SIZE, TILE_SIZE))
+        # Store them in a list to choose from randomly
+        self.ground_tiles = [ground_tile1, ground_tile2]
+        self.ground_tile_map = self.generate_ground_tile_map()
         self.font = pygame.font.SysFont(None, 24)  # Font for rendering numbers
         self.layout = self.generate_dungeon()
 
@@ -22,6 +27,13 @@ class Dungeon:
 
         return layout
 
+    def generate_ground_tile_map(self):
+        """Generate a random ground tile for each ground position in the dungeon."""
+        ground_tile_map = []
+        for row in range(self.tiles_y):
+            ground_tile_map.append([random.choice(self.ground_tiles) for _ in range(self.tiles_x)])
+        return ground_tile_map
+    
     def add_structures(self, layout):
         # Define some predefined shapes
         shapes = [
@@ -120,7 +132,8 @@ class Dungeon:
                 if tile == "1":
                     screen.blit(self.wall_tile_image, (screen_x, screen_y))
                 elif tile == "0":
-                    screen.blit(self.ground_tile_image, (screen_x, screen_y))  # Draw ground
+                    ground_tile = self.ground_tile_map[row_index][col_index]
+                    screen.blit(ground_tile, (screen_x, screen_y))
                 '''
                 # Render the tile's value (0 or 1) on top of the tile
                 text_surface = self.font.render(tile, True, (255, 255, 255))
