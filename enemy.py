@@ -367,29 +367,153 @@ class BossMeleeEnemy(Enemy):
     def __init__(self, x, y):
         super().__init__(x, y)
         self.size = 80  # Boss size is 2x2 tiles (assuming each tile is 40x40)
-        self.image = pygame.Surface((self.size, self.size))
-        self.image.fill((0, 0, 255))  # Blue for boss enemies
-        self.original_color = (0, 0, 255)  # Original color is blue
+
+        # Load animation images for idle, walking, and melee attacking
+        self.original_idle_images = [pygame.transform.scale(pygame.image.load('assets/bossidle.png').convert_alpha(), (self.size, self.size)),
+                                     pygame.transform.scale(pygame.image.load('assets/bossidle2.png').convert_alpha(), (self.size, self.size))]
+        self.original_walk_images = [pygame.transform.scale(pygame.image.load('assets/bosswalk.png').convert_alpha(), (self.size, self.size)),
+                                     pygame.transform.scale(pygame.image.load('assets/bosswalk2.png').convert_alpha(), (self.size, self.size))]
+        self.original_attack_images = [pygame.transform.scale(pygame.image.load('assets/bossattack.png').convert_alpha(), (self.size, self.size)),
+                                       pygame.transform.scale(pygame.image.load('assets/bossattack2.png').convert_alpha(), (self.size, self.size))]
+
+        # Initialize the current image sets
+        self.idle_images = self.original_idle_images[:]
+        self.walk_images = self.original_walk_images[:]
+        self.attack_images = self.original_attack_images[:]
+
+        self.image = self.idle_images[0]  # Set initial image to idle
+        self.rect = pygame.Rect(x, y, self.size, self.size)
+
+        # Boss attributes
         self.health = 200  # Higher health for the boss
         self.speed = 3  # Speed value for boss
         self.melee_damage = 25  # Stronger melee attacks
         self.melee_range = 70  # Melee attack range
         self.attack_cooldown = 800  # Cooldown between attacks
-        self.rect = pygame.Rect(x, y, self.size, self.size) 
 
-    def take_damage(self, amount):
-        """Reduce the enemy's health by a specified amount and trigger the flash effect."""
-        self.health -= amount
-        self.start_flash()  # Trigger the flash effect
-        print(f"Boss took {amount} damage, remaining health: {self.health}")
-        if self.health <= 0:
-            return True  # Return True if the boss dies
-        return False
+        # Animation frame tracking
+        self.current_idle_frame = 0
+        self.current_walk_frame = 0
+        self.current_attack_frame = 0
+        self.animation_speed = 300  # Time in milliseconds between frames
+        self.last_animation_time = pygame.time.get_ticks()
+
+        # Attack animation tracking
+        self.attacking = False
+        self.attack_animation_duration = 600  # Time in milliseconds for the attack animation
+        self.attack_animation_start_time = 0
+
+        # Direction tracking
+        self.facing_right = True  # Start facing right
+        
+        self.walking = False
+
+    def update(self, player, walls, camera_offset, enemies):
+        """Update boss logic."""
+        self.move_towards_player(player.rect, walls, enemies)  # Handle movement
+
+        # Handle flashing state
+        if self.is_flashing:
+            self.update_flash()  # Apply flash effect
+        else:
+            # Update the animation based on whether the boss is attacking or walking
+            if self.attacking:
+                self.update_attack_animation()
+            elif self.walking:
+                self.update_walk_animation()
+            else:
+                self.update_idle_animation()
+
+        # Handle melee attack logic
+        self.melee_attack(player)
+
+    def update_attack_animation(self):
+        """Update the attack animation by switching between the attack frames."""
+        current_time = pygame.time.get_ticks()
+
+        # Check if the animation duration has passed
+        if current_time - self.attack_animation_start_time >= self.attack_animation_duration:
+            # End attack animation and reset to idle or walk
+            self.attacking = False
+            return
+
+        # Switch to the next attack frame
+        frame_duration = self.attack_animation_duration // len(self.attack_images)
+        frame_index = (current_time - self.attack_animation_start_time) // frame_duration
+        self.image = self.attack_images[int(frame_index) % len(self.attack_images)]
+
+        # Ensure correct facing direction
+        self.flip_animations_if_needed()
+
+    def melee_attack(self, player):
+        """Perform a melee attack on the player, covering all adjacent tiles."""
+        current_time = pygame.time.get_ticks()
+
+        # Define the attack range: covering one tile left, one tile up, two tiles down, and two tiles right
+        boss_attack_range = pygame.Rect(
+            self.rect.x - TILE_SIZE,  # One tile to the left
+            self.rect.y - TILE_SIZE,  # One tile above
+            self.size + TILE_SIZE * 2,  # Cover two tiles to the right
+            self.size + TILE_SIZE * 2   # Cover two tiles below
+        )
+
+        # Check if the player is within this larger attack range and if the cooldown is over
+        if boss_attack_range.colliderect(player.rect) and current_time - self.last_attack_time >= self.attack_cooldown:
+            # Perform attack
+            player.take_damage(self.melee_damage)
+            self.last_attack_time = current_time  # Update last attack time
+            print(f"Boss dealt {self.melee_damage} damage to the player!")
+
+            # Start attack animation
+            self.attacking = True
+            self.attack_animation_start_time = current_time
+
+    def update_walk_animation(self):
+        """Update the walk animation by switching between the walk frames."""
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_animation_time >= self.animation_speed:
+            # Switch to the next walk frame
+            self.current_walk_frame = (self.current_walk_frame + 1) % len(self.walk_images)
+            self.image = self.walk_images[self.current_walk_frame]
+            self.last_animation_time = current_time
+
+        # Ensure correct facing direction
+        self.flip_animations_if_needed()
+
+    def update_idle_animation(self):
+        """Update the idle animation by switching between the idle frames."""
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_animation_time >= self.animation_speed:
+            # Switch to the next idle frame
+            self.current_idle_frame = (self.current_idle_frame + 1) % len(self.idle_images)
+            self.image = self.idle_images[self.current_idle_frame]
+            self.last_animation_time = current_time
+
+        # Ensure correct facing direction
+        self.flip_animations_if_needed()
+
+    def flip_animations_if_needed(self):
+        """Flip all animations if the direction changes."""
+        if self.facing_right:
+            self.idle_images = self.original_idle_images[:]
+            self.walk_images = self.original_walk_images[:]
+            self.attack_images = self.original_attack_images[:]
+        else:
+            # Flip all images if the boss is facing left
+            self.idle_images = [pygame.transform.flip(img, True, False) for img in self.original_idle_images]
+            self.walk_images = [pygame.transform.flip(img, True, False) for img in self.original_walk_images]
+            self.attack_images = [pygame.transform.flip(img, True, False) for img in self.original_attack_images]
 
     def move_towards_player(self, player_rect, walls, enemies, gap=5):
         """Move the enemy towards the player without overlapping other enemies or the player, leaving a gap."""
         dx = player_rect.centerx - self.rect.centerx
         dy = player_rect.centery - self.rect.centery
+
+        # Update direction: Set facing_right to True if moving right, False if moving left
+        if dx > 0:
+            self.facing_right = True
+        else:
+            self.facing_right = False
 
         if abs(dx) > abs(dy):
             # Move horizontally
@@ -411,37 +535,21 @@ class BossMeleeEnemy(Enemy):
         # Prevent overlapping with walls, other enemies, and the player
         if not self.check_collision(new_pos, walls, enemies) and not self.check_collision_with_player(player_rect, gap):
             self.rect.topleft = new_pos
+            self.walking = True
+        else:
+            self.walking = False
+
+    def draw(self, screen, camera_offset):
+        """Draw the boss."""
+        screen_x = self.rect.x - camera_offset[0]
+        screen_y = self.rect.y - camera_offset[1]
+        screen.blit(self.image, (screen_x, screen_y))
 
     def check_collision_with_player(self, player_rect, gap=5):
         """Check for collision with the player, leaving a small gap."""
-        # Check collision with a small gap around the player
+        # Make sure new_pos is properly defined as (x, y)
         boss_rect = pygame.Rect(self.rect.x, self.rect.y, self.size, self.size)
         expanded_player_rect = player_rect.inflate(gap * 2, gap * 2)  # Expand player's rect by the gap
 
         # If the boss is close to the player but not touching
         return boss_rect.colliderect(expanded_player_rect)
-
-    def update(self, player, walls, camera_offset, enemies):
-        """Update boss logic."""
-        super().update(player, walls, camera_offset, enemies)
-        # Call melee attack to check if the player is in range and deal damage
-        self.melee_attack(player)
-
-    def melee_attack(self, player):
-        """Perform a melee attack on the player, covering all adjacent tiles."""
-        current_time = pygame.time.get_ticks()
-
-        # Define the attack range: covering one tile left, one tile up, two tiles down, and two tiles right
-        boss_attack_range = pygame.Rect(
-            self.rect.x - TILE_SIZE,  # One tile to the left
-            self.rect.y - TILE_SIZE,  # One tile above
-            self.size + TILE_SIZE * 2,  # Cover two tiles to the right
-            self.size + TILE_SIZE * 2   # Cover two tiles below
-        )
-
-        # Check if the player is within this larger attack range and if the cooldown is over
-        if boss_attack_range.colliderect(player.rect) and current_time - self.last_attack_time >= self.attack_cooldown:
-            # Perform attack
-            player.take_damage(self.melee_damage)
-            self.last_attack_time = current_time  # Update last attack time
-            print(f"Boss dealt {self.melee_damage} damage to the player!")
