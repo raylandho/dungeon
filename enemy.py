@@ -3,6 +3,8 @@ import random
 from settings import TILE_SIZE
 from projectile import EnemyProjectile
 
+pygame.mixer.init()
+
 class Enemy:
     def __init__(self, x, y):
         self.size = 40  # Example size, adjust as needed
@@ -20,6 +22,8 @@ class Enemy:
         
         self.image = self.idle_images[0]
         self.rect = self.image.get_rect(topleft=(x, y))
+        
+        self.melee_attack_sound = pygame.mixer.Sound('assets/retro-click.mp3') 
         
         self.health = 50  # Example health value
         self.speed = 2  # Example speed value
@@ -208,6 +212,7 @@ class Enemy:
         if distance_to_player <= self.melee_range and current_time - self.last_attack_time >= self.attack_cooldown:
             self.attacking = True
             self.attack_animation_start_time = pygame.time.get_ticks()  # Start the attack animation timer
+            self.melee_attack_sound.play()  # Play the melee attack sound
             player.take_damage(self.melee_damage)  # Inflict damage to the player
             self.last_attack_time = current_time  # Update last attack time
             print(f"Enemy dealt {self.melee_damage} damage to the player!")
@@ -459,6 +464,7 @@ class BossMeleeEnemy(Enemy):
 
         # Check if the player is within this larger attack range and if the cooldown is over
         if boss_attack_range.colliderect(player.rect) and current_time - self.last_attack_time >= self.attack_cooldown:
+            self.melee_attack_sound.play()  # Play the melee attack sound
             # Perform attack
             player.take_damage(self.melee_damage)
             self.last_attack_time = current_time  # Update last attack time

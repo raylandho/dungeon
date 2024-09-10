@@ -2,10 +2,17 @@ import pygame
 from settings import PLAYER_SIZE, TILE_SIZE
 from projectile import Projectile, MeleeAttack, Fireball, LightningStrike
 
+pygame.mixer.init()
+
 class Player:
     def __init__(self, x, y):
         self.size = PLAYER_SIZE
         self.rect = pygame.Rect(x, y, self.size, self.size)
+        self.melee_attack_sound = pygame.mixer.Sound('assets/sword.mp3')
+        self.spell_attack_sound = pygame.mixer.Sound('assets/basicspell.mp3') 
+        self.teleport_sound = pygame.mixer.Sound('assets/teleport.mp3')
+        self.fireball_sound = pygame.mixer.Sound('assets/fireball.mp3')
+        self.lightning_sound = pygame.mixer.Sound('assets/thunder.mp3')
         
         # Animation state
         self.animation_state = 'idle'
@@ -162,6 +169,7 @@ class Player:
         self.play_teleport_animation(screen, camera_offset, original_position)
         # Update the last teleport time
         self.last_teleport_time = current_time
+        self.teleport_sound.play()
         #print("Teleport successful")
 
     def teleport_attack(self, screen, camera_offset, walls, dungeon_width, dungeon_height, dungeon, screen_width, screen_height, enemies, projectiles):
@@ -226,6 +234,8 @@ class Player:
                 enemies.remove(enemy)
 
             self.last_teleport_time = current_time  # Update the last teleport time
+            self.play_teleport_animation(screen, camera_offset, original_position)
+            self.teleport_sound.play()  # Play the teleport sound
             print("Teleport attack successful")
     
     def play_teleport_animation(self, screen, camera_offset, original_position):
@@ -342,6 +352,7 @@ class Player:
             self.last_attack_time = current_time
             # Create the melee attack instance
             self.melee_attack_instance = MeleeAttack(self.rect, self.aim_direction)
+            self.melee_attack_sound.play()  # Play the melee attack sound
             kills = self.melee_attack_instance.check_collision(enemies)
             if kills > 0:
                 self.gain_xp(50 * kills)
@@ -372,6 +383,7 @@ class Player:
             projectiles.append(projectile)
             self.use_mana(10)
             self.last_attack_time = current_time
+            self.spell_attack_sound.play()  # Play the melee attack sound
         else:
             self.is_casting = False  # Reset casting after cooldown
     
@@ -393,6 +405,7 @@ class Player:
             projectiles.append(fireball)
             self.use_mana(fireball_mana_cost)
             self.last_attack_time = current_time
+            self.fireball_sound.play()  # Play the fireball sound
         else:
             self.is_casting = False  # Reset casting after cooldown
     
@@ -418,6 +431,7 @@ class Player:
         """Confirm the lightning strike, damage enemies, and exit lightning mode."""
         if self.lightning_strike:
             # Play the animation where the circle is
+            self.lightning_sound.play()
             self.play_lightning_animation(screen, camera_offset)
             struck_enemies = self.lightning_strike.check_enemies_in_range(enemies, self)
             print(f"Lightning Strike hit {struck_enemies} enemies!")

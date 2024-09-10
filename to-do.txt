@@ -6,8 +6,6 @@ Easy
 Medium
 
 Hard
-- Add soundtrack
-- Add sound effects
 
 Final Additions
 - Increase map size and add more generated terrain
