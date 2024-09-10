@@ -209,11 +209,44 @@ class Enemy:
 class RangedEnemy(Enemy):
     def __init__(self, x, y, screen_width, screen_height):
         super().__init__(x, y)
-        self.image.fill((255, 165, 0))  # Orange color for ranged enemies
-        self.original_color = (255, 165, 0)  # Original color is orange
+        
+        # Load animation images for idle, walking, and shooting
+        self.original_idle_images = [pygame.transform.scale(pygame.image.load('assets/mageidle.png').convert_alpha(), (self.size, self.size)),
+                                     pygame.transform.scale(pygame.image.load('assets/mageidle2.png').convert_alpha(), (self.size, self.size))]
+        self.original_walk_images = [pygame.transform.scale(pygame.image.load('assets/magewalk.png').convert_alpha(), (self.size, self.size)),
+                                     pygame.transform.scale(pygame.image.load('assets/magewalk2.png').convert_alpha(), (self.size, self.size))]
+        self.original_shoot_images = [pygame.transform.scale(pygame.image.load('assets/magecast.png').convert_alpha(), (self.size, self.size)),
+                                      pygame.transform.scale(pygame.image.load('assets/magecast2.png').convert_alpha(), (self.size, self.size))]
+        
+        # Initialize the current image sets
+        self.idle_images = self.original_idle_images[:]
+        self.walk_images = self.original_walk_images[:]
+        self.shoot_images = self.original_shoot_images[:]
+        
+        self.image = self.idle_images[0]
+        self.rect = self.image.get_rect(topleft=(x, y))
         self.projectiles = []  # List to store enemy projectiles
+        
+        # Colors and shoot cooldown
+        self.original_color = (255, 165, 0)  # Orange color for ranged enemies
         self.shoot_cooldown = 1500  # Cooldown between shots (milliseconds)
         self.last_shot_time = 0  # Track the last time the enemy shot
+        
+        # Direction tracking
+        self.facing_right = True  # Start facing right
+
+        # Animation frame tracking
+        self.current_idle_frame = 0
+        self.current_walk_frame = 0
+        self.current_shoot_frame = 0
+        self.animation_speed = 300  # Time in milliseconds between frames
+        self.last_animation_time = pygame.time.get_ticks()
+
+        # Shooting animation tracking
+        self.shooting = False
+        self.shoot_animation_duration = 500  # Time in milliseconds for the shoot animation
+        self.shoot_animation_start_time = 0
+        
         self.screen_width = screen_width
         self.screen_height = screen_height
 
@@ -224,21 +257,69 @@ class RangedEnemy(Enemy):
             # Create a new projectile aimed at the player
             direction = pygame.math.Vector2(player.rect.centerx - self.rect.centerx, player.rect.centery - self.rect.centery)
             direction = direction.normalize()  # Normalize the direction vector
-            
+
             # Initialize the projectile at the enemy's center
             new_projectile = EnemyProjectile(self.rect.centerx, self.rect.centery, direction, self.screen_width, self.screen_height)
             self.projectiles.append(new_projectile)
+            self.shooting = True  # Start the shoot animation
+            self.shoot_animation_start_time = current_time  # Record the start time of the shooting animation
             self.last_shot_time = current_time
 
     def update(self, player, walls, camera_offset, enemies):
-        """Update enemy logic, including shooting."""
-        super().update(player, walls, camera_offset, enemies)  # Pass the required arguments to the base update method
+        """Update enemy logic, including shooting and animations."""
+        # We don't call `super().update()` here to avoid melee-related updates from the base `Enemy` class
+        
+        self.move_towards_player(player.rect, walls, enemies)  # Handle movement
+        
         self.shoot(player)  # Attempt to shoot at the player
+        
+        # Update the animation based on whether the enemy is shooting or walking
+        if self.shooting:
+            self.update_shoot_animation()
+        elif self.walking:
+            self.update_walk_animation()
+        else:
+            self.update_idle_animation()
+
+    def update_shoot_animation(self):
+        """Update the shoot animation by switching between the shooting frames."""
+        current_time = pygame.time.get_ticks()
+
+        # Check if the animation duration has passed
+        if current_time - self.shoot_animation_start_time >= self.shoot_animation_duration:
+            # End shoot animation and reset to idle or walk
+            self.shooting = False
+            return
+
+        # Switch to the next shoot frame
+        frame_duration = self.shoot_animation_duration // len(self.shoot_images)
+        frame_index = (current_time - self.shoot_animation_start_time) // frame_duration
+        self.image = self.shoot_images[int(frame_index) % len(self.shoot_images)]
+
+        # Ensure correct facing direction
+        self.flip_animations_if_needed()
+
+    def flip_animations_if_needed(self):
+        """Flip all animations if the direction changes."""
+        if self.facing_right:
+            self.idle_images = self.original_idle_images[:]
+            self.walk_images = self.original_walk_images[:]
+            self.shoot_images = self.original_shoot_images[:]
+        else:
+            self.idle_images = [pygame.transform.flip(img, True, False) for img in self.original_idle_images]
+            self.walk_images = [pygame.transform.flip(img, True, False) for img in self.original_walk_images]
+            self.shoot_images = [pygame.transform.flip(img, True, False) for img in self.original_shoot_images]
 
     def draw(self, screen, camera_offset):
-        """Draw the enemy sprite."""
-        super().draw(screen, camera_offset)
-        # Projectiles are drawn in the main loop
+        """Draw the ranged enemy and projectiles."""
+        # Draw the ranged enemy
+        screen_x = self.rect.x - camera_offset[0]
+        screen_y = self.rect.y - camera_offset[1]
+        screen.blit(self.image, (screen_x, screen_y))
+
+        # Draw projectiles
+        for projectile in self.projectiles:
+            projectile.draw(screen, camera_offset)
 
 class BossMeleeEnemy(Enemy):
     def __init__(self, x, y):
