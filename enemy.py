@@ -1,19 +1,30 @@
 import pygame
 import random
+import sys
+import os
 from settings import TILE_SIZE
 from projectile import EnemyProjectile
 
 pygame.mixer.init()
 
+def resource_path(relative_path):
+    """ Get the absolute path to the resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 class Enemy:
     def __init__(self, x, y):
         self.size = 40  # Example size, adjust as needed
-        self.original_idle_images = [pygame.transform.scale(pygame.image.load('assets/goblinidle.png').convert_alpha(), (self.size, self.size)),
-                                     pygame.transform.scale(pygame.image.load('assets/goblinidle2.png').convert_alpha(), (self.size, self.size))]
-        self.original_walk_images = [pygame.transform.scale(pygame.image.load('assets/goblinwalk.png').convert_alpha(), (self.size, self.size)),
-                                     pygame.transform.scale(pygame.image.load('assets/goblinwalk2.png').convert_alpha(), (self.size, self.size))]
-        self.original_attack_images = [pygame.transform.scale(pygame.image.load('assets/goblinattack.png').convert_alpha(), (self.size, self.size)),
-                                       pygame.transform.scale(pygame.image.load('assets/goblinattack2.png').convert_alpha(), (self.size, self.size))]
+        self.original_idle_images = [pygame.transform.scale(pygame.image.load(resource_path('assets/goblinidle.png')).convert_alpha(), (self.size, self.size)),
+                                     pygame.transform.scale(pygame.image.load(resource_path('assets/goblinidle2.png')).convert_alpha(), (self.size, self.size))]
+        self.original_walk_images = [pygame.transform.scale(pygame.image.load(resource_path('assets/goblinwalk.png')).convert_alpha(), (self.size, self.size)),
+                                     pygame.transform.scale(pygame.image.load(resource_path('assets/goblinwalk2.png')).convert_alpha(), (self.size, self.size))]
+        self.original_attack_images = [pygame.transform.scale(pygame.image.load(resource_path('assets/goblinattack.png')).convert_alpha(), (self.size, self.size)),
+                                       pygame.transform.scale(pygame.image.load(resource_path('assets/goblinattack2.png')).convert_alpha(), (self.size, self.size))]
         
         # Set initial images
         self.idle_images = self.original_idle_images[:]
@@ -23,7 +34,7 @@ class Enemy:
         self.image = self.idle_images[0]
         self.rect = self.image.get_rect(topleft=(x, y))
         
-        self.melee_attack_sound = pygame.mixer.Sound('assets/retro-click.mp3') 
+        self.melee_attack_sound = pygame.mixer.Sound(resource_path('assets/retro-click.mp3')) 
         
         self.health = 50  # Example health value
         self.speed = 2  # Example speed value
@@ -232,12 +243,12 @@ class RangedEnemy(Enemy):
         super().__init__(x, y)
         
         # Load animation images for idle, walking, and shooting
-        self.original_idle_images = [pygame.transform.scale(pygame.image.load('assets/mageidle.png').convert_alpha(), (self.size, self.size)),
-                                     pygame.transform.scale(pygame.image.load('assets/mageidle2.png').convert_alpha(), (self.size, self.size))]
-        self.original_walk_images = [pygame.transform.scale(pygame.image.load('assets/magewalk.png').convert_alpha(), (self.size, self.size)),
-                                     pygame.transform.scale(pygame.image.load('assets/magewalk2.png').convert_alpha(), (self.size, self.size))]
-        self.original_shoot_images = [pygame.transform.scale(pygame.image.load('assets/magecast.png').convert_alpha(), (self.size, self.size)),
-                                      pygame.transform.scale(pygame.image.load('assets/magecast2.png').convert_alpha(), (self.size, self.size))]
+        self.original_idle_images = [pygame.transform.scale(pygame.image.load(resource_path('assets/mageidle.png')).convert_alpha(), (self.size, self.size)),
+                                     pygame.transform.scale(pygame.image.load(resource_path('assets/mageidle2.png')).convert_alpha(), (self.size, self.size))]
+        self.original_walk_images = [pygame.transform.scale(pygame.image.load(resource_path('assets/magewalk.png')).convert_alpha(), (self.size, self.size)),
+                                     pygame.transform.scale(pygame.image.load(resource_path('assets/magewalk2.png')).convert_alpha(), (self.size, self.size))]
+        self.original_shoot_images = [pygame.transform.scale(pygame.image.load(resource_path('assets/magecast.png')).convert_alpha(), (self.size, self.size)),
+                                      pygame.transform.scale(pygame.image.load(resource_path('assets/magecast2.png')).convert_alpha(), (self.size, self.size))]
         
         # Initialize the current image sets
         self.idle_images = self.original_idle_images[:]
@@ -374,12 +385,12 @@ class BossMeleeEnemy(Enemy):
         self.size = 80  # Boss size is 2x2 tiles (assuming each tile is 40x40)
 
         # Load animation images for idle, walking, and melee attacking
-        self.original_idle_images = [pygame.transform.scale(pygame.image.load('assets/bossidle.png').convert_alpha(), (self.size, self.size)),
-                                     pygame.transform.scale(pygame.image.load('assets/bossidle2.png').convert_alpha(), (self.size, self.size))]
-        self.original_walk_images = [pygame.transform.scale(pygame.image.load('assets/bosswalk.png').convert_alpha(), (self.size, self.size)),
-                                     pygame.transform.scale(pygame.image.load('assets/bosswalk2.png').convert_alpha(), (self.size, self.size))]
-        self.original_attack_images = [pygame.transform.scale(pygame.image.load('assets/bossattack.png').convert_alpha(), (self.size, self.size)),
-                                       pygame.transform.scale(pygame.image.load('assets/bossattack2.png').convert_alpha(), (self.size, self.size))]
+        self.original_idle_images = [pygame.transform.scale(pygame.image.load(resource_path('assets/bossidle.png')).convert_alpha(), (self.size, self.size)),
+                                     pygame.transform.scale(pygame.image.load(resource_path('assets/bossidle2.png')).convert_alpha(), (self.size, self.size))]
+        self.original_walk_images = [pygame.transform.scale(pygame.image.load(resource_path('assets/bosswalk.png')).convert_alpha(), (self.size, self.size)),
+                                     pygame.transform.scale(pygame.image.load(resource_path('assets/bosswalk2.png')).convert_alpha(), (self.size, self.size))]
+        self.original_attack_images = [pygame.transform.scale(pygame.image.load(resource_path('assets/bossattack.png')).convert_alpha(), (self.size, self.size)),
+                                       pygame.transform.scale(pygame.image.load(resource_path('assets/bossattack2.png')).convert_alpha(), (self.size, self.size))]
 
         # Initialize the current image sets
         self.idle_images = self.original_idle_images[:]

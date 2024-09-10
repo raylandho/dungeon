@@ -1,6 +1,17 @@
 import pygame
 import math
+import sys
+import os
 from settings import PLAYER_SIZE, TILE_SIZE
+
+def resource_path(relative_path):
+    """ Get the absolute path to the resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 class Projectile:
     def __init__(self, x, y, direction, screen_width, screen_height, speed=5, size=None, damage=25):
@@ -8,8 +19,8 @@ class Projectile:
 
         # Load both projectile images for animation
         self.projectile_images = [
-            pygame.transform.scale(pygame.image.load('assets/energy.png').convert_alpha(), (self.size, self.size)),
-            pygame.transform.scale(pygame.image.load('assets/energy2.png').convert_alpha(), (self.size, self.size))
+            pygame.transform.scale(pygame.image.load(resource_path('assets/energy.png')).convert_alpha(), (self.size, self.size)),
+            pygame.transform.scale(pygame.image.load(resource_path('assets/energy2.png')).convert_alpha(), (self.size, self.size))
         ]
 
         self.rect = self.projectile_images[0].get_rect(center=(x, y))
@@ -88,8 +99,8 @@ class Fireball(Projectile):
 
          # Load both fireball images for animation
         self.fireball_images = [
-            pygame.transform.scale(pygame.image.load('assets/fireball.png').convert_alpha(), (self.size, self.size)),
-            pygame.transform.scale(pygame.image.load('assets/fireball2.png').convert_alpha(), (self.size, self.size))
+            pygame.transform.scale(pygame.image.load(resource_path('assets/fireball.png')).convert_alpha(), (self.size, self.size)),
+            pygame.transform.scale(pygame.image.load(resource_path('assets/fireball2.png')).convert_alpha(), (self.size, self.size))
         ]
         
         self.damage = 100  # Fireball deals more damage
@@ -201,7 +212,7 @@ class MeleeAttack:
         attack_offset_x = aim_direction.x * (player_rect.width // 2 + attack_range // 2)
         attack_offset_y = aim_direction.y * (player_rect.height // 2 + attack_range // 2)
 
-        slash_image = pygame.image.load('assets/slash.png').convert_alpha()
+        slash_image = pygame.image.load(resource_path('assets/slash.png')).convert_alpha()
         self.slash_image = pygame.transform.scale(slash_image, (attack_range, attack_range))
         self.slash_image = self.rotate_slash_by_direction(self.slash_image, aim_direction)
 
@@ -253,8 +264,8 @@ class EnemyProjectile(Projectile):
 
         # Load both projectile images for animation
         self.projectile_images = [
-            pygame.transform.scale(pygame.image.load('assets/red.png').convert_alpha(), (self.size, self.size)),
-            pygame.transform.scale(pygame.image.load('assets/red2.png').convert_alpha(), (self.size, self.size))
+            pygame.transform.scale(pygame.image.load(resource_path('assets/red.png')).convert_alpha(), (self.size, self.size)),
+            pygame.transform.scale(pygame.image.load(resource_path('assets/red2.png')).convert_alpha(), (self.size, self.size))
         ]
 
         self.rect = self.projectile_images[0].get_rect(center=(x, y))

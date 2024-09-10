@@ -1,5 +1,6 @@
 import pygame
 import sys
+import os
 import random
 from settings import TILE_SIZE, FPS
 from player import Player
@@ -7,6 +8,16 @@ from projectile import Projectile, Fireball, EnemyProjectile  # Import EnemyProj
 from enemy import RangedEnemy, Enemy, BossMeleeEnemy  # Import both RangedEnemy and Enemy (melee enemies)
 from dungeon import Dungeon
 from inventory import Inventory  # Import the Inventory class
+
+def resource_path(relative_path):
+    """ Get the absolute path to the resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 
 def toggle_fullscreen(current_mode, screen, SCREEN_WIDTH, SCREEN_HEIGHT):
     if current_mode is None:
@@ -23,7 +34,7 @@ def main():
     pygame.init()
     
     pygame.mixer.init()
-    pygame.mixer.music.load('assets/movement.mp3') 
+    pygame.mixer.music.load(resource_path('assets/movement.mp3')) 
     pygame.mixer.music.play(-1)
     pygame.mixer.music.set_volume(0.5)  # 50% volume
     

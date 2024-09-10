@@ -1,18 +1,29 @@
 import pygame
+import sys
+import os
 from settings import PLAYER_SIZE, TILE_SIZE
 from projectile import Projectile, MeleeAttack, Fireball, LightningStrike
 
 pygame.mixer.init()
 
+def resource_path(relative_path):
+    """ Get the absolute path to the resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 class Player:
     def __init__(self, x, y):
         self.size = PLAYER_SIZE
         self.rect = pygame.Rect(x, y, self.size, self.size)
-        self.melee_attack_sound = pygame.mixer.Sound('assets/sword.mp3')
-        self.spell_attack_sound = pygame.mixer.Sound('assets/basicspell.mp3') 
-        self.teleport_sound = pygame.mixer.Sound('assets/teleport.mp3')
-        self.fireball_sound = pygame.mixer.Sound('assets/fireball.mp3')
-        self.lightning_sound = pygame.mixer.Sound('assets/thunder.mp3')
+        self.melee_attack_sound = pygame.mixer.Sound(resource_path('assets/sword.mp3'))
+        self.spell_attack_sound = pygame.mixer.Sound(resource_path('assets/basicspell.mp3'))
+        self.teleport_sound = pygame.mixer.Sound(resource_path('assets/teleport.mp3'))
+        self.fireball_sound = pygame.mixer.Sound(resource_path('assets/fireball.mp3'))
+        self.lightning_sound = pygame.mixer.Sound(resource_path('assets/thunder.mp3'))
         
         # Animation state
         self.animation_state = 'idle'
@@ -23,20 +34,20 @@ class Player:
         # Load animations (assuming you have two frames for each)
         self.animations = {
             'idle': [
-                pygame.transform.scale(pygame.image.load('assets/playeridle.png').convert_alpha(), (self.size, self.size)),
-                pygame.transform.scale(pygame.image.load('assets/playeridle2.png').convert_alpha(), (self.size, self.size))
+                pygame.transform.scale(pygame.image.load(resource_path('assets/playeridle.png')).convert_alpha(), (self.size, self.size)),
+                pygame.transform.scale(pygame.image.load(resource_path('assets/playeridle2.png')).convert_alpha(), (self.size, self.size))
             ],
             'walk': [
-                pygame.transform.scale(pygame.image.load('assets/playerwalk.png').convert_alpha(), (self.size, self.size)),
-                pygame.transform.scale(pygame.image.load('assets/playerwalk2.png').convert_alpha(), (self.size, self.size))
+                pygame.transform.scale(pygame.image.load(resource_path('assets/playerwalk.png')).convert_alpha(), (self.size, self.size)),
+                pygame.transform.scale(pygame.image.load(resource_path('assets/playerwalk2.png')).convert_alpha(), (self.size, self.size))
             ],
             'attack': [
-                pygame.transform.scale(pygame.image.load('assets/playerattack.png').convert_alpha(), (self.size, self.size)),
-                pygame.transform.scale(pygame.image.load('assets/playerattack2.png').convert_alpha(), (self.size, self.size))
+                pygame.transform.scale(pygame.image.load(resource_path('assets/playerattack.png')).convert_alpha(), (self.size, self.size)),
+                pygame.transform.scale(pygame.image.load(resource_path('assets/playerattack2.png')).convert_alpha(), (self.size, self.size))
             ],
             'cast': [
-                pygame.transform.scale(pygame.image.load('assets/playercast.png').convert_alpha(), (self.size, self.size)),
-                pygame.transform.scale(pygame.image.load('assets/playercast2.png').convert_alpha(), (self.size, self.size))
+                pygame.transform.scale(pygame.image.load(resource_path('assets/playercast.png')).convert_alpha(), (self.size, self.size)),
+                pygame.transform.scale(pygame.image.load(resource_path('assets/playercast2.png')).convert_alpha(), (self.size, self.size))
             ]
         }
         
@@ -242,8 +253,8 @@ class Player:
         """Play the teleport animation at the given position."""
         teleport_images = [
             #pygame.transform.scale(pygame.image.load('assets/teleport.png').convert_alpha(), (TILE_SIZE, TILE_SIZE)),
-            pygame.transform.scale(pygame.image.load('assets/teleport2.png').convert_alpha(), (TILE_SIZE, TILE_SIZE)),
-            pygame.transform.scale(pygame.image.load('assets/teleport3.png').convert_alpha(), (TILE_SIZE, TILE_SIZE))
+            pygame.transform.scale(pygame.image.load(resource_path('assets/teleport2.png')).convert_alpha(), (TILE_SIZE, TILE_SIZE)),
+            pygame.transform.scale(pygame.image.load(resource_path('assets/teleport3.png')).convert_alpha(), (TILE_SIZE, TILE_SIZE))
         ]
 
         # Calculate the position for the animation (center it on the original position)
@@ -442,10 +453,10 @@ class Player:
     def play_lightning_animation(self, screen, camera_offset):
         """Play the 4-part lightning strike animation in quick succession."""
         lightning_images = [
-            pygame.transform.scale(pygame.image.load('assets/lightning.png').convert_alpha(), (TILE_SIZE * 4, TILE_SIZE * 4)),
-            pygame.transform.scale(pygame.image.load('assets/lightning2.png').convert_alpha(), (TILE_SIZE * 4, TILE_SIZE * 4)),
-            pygame.transform.scale(pygame.image.load('assets/lightning3.png').convert_alpha(), (TILE_SIZE * 4, TILE_SIZE * 4)),
-            pygame.transform.scale(pygame.image.load('assets/lightning4.png').convert_alpha(), (TILE_SIZE * 4, TILE_SIZE * 4))
+            pygame.transform.scale(pygame.image.load(resource_path('assets/lightning.png')).convert_alpha(), (TILE_SIZE * 4, TILE_SIZE * 4)),
+            pygame.transform.scale(pygame.image.load(resource_path('assets/lightning2.png')).convert_alpha(), (TILE_SIZE * 4, TILE_SIZE * 4)),
+            pygame.transform.scale(pygame.image.load(resource_path('assets/lightning3.png')).convert_alpha(), (TILE_SIZE * 4, TILE_SIZE * 4)),
+            pygame.transform.scale(pygame.image.load(resource_path('assets/lightning4.png')).convert_alpha(), (TILE_SIZE * 4, TILE_SIZE * 4))
         ]
 
         # Calculate the position where the animation should play (center it on the lightning strike target)

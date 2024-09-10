@@ -1,21 +1,32 @@
 import pygame
 import random
+import sys
+import os
 from settings import TILE_SIZE
+
+def resource_path(relative_path):
+    """ Get the absolute path to the resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 class Dungeon:
     def __init__(self, width_in_tiles, height_in_tiles):
         self.tiles_x = width_in_tiles
         self.tiles_y = height_in_tiles
         # Load and scale the wall tile image
-        wall_tile1 = pygame.transform.scale(pygame.image.load('assets/wall.png').convert(), (TILE_SIZE, TILE_SIZE))
-        wall_tile2 = pygame.transform.scale(pygame.image.load('assets/wall2.png').convert(), (TILE_SIZE, TILE_SIZE))
-        wall_tile3 = pygame.transform.scale(pygame.image.load('assets/wall3.png').convert(), (TILE_SIZE, TILE_SIZE))
-        wall_tile4 = pygame.transform.scale(pygame.image.load('assets/wall4.png').convert(), (TILE_SIZE, TILE_SIZE))
+        wall_tile1 = pygame.transform.scale(pygame.image.load(resource_path('assets/wall.png')).convert(), (TILE_SIZE, TILE_SIZE))
+        wall_tile2 = pygame.transform.scale(pygame.image.load(resource_path('assets/wall2.png')).convert(), (TILE_SIZE, TILE_SIZE))
+        wall_tile3 = pygame.transform.scale(pygame.image.load(resource_path('assets/wall3.png')).convert(), (TILE_SIZE, TILE_SIZE))
+        wall_tile4 = pygame.transform.scale(pygame.image.load(resource_path('assets/wall4.png')).convert(), (TILE_SIZE, TILE_SIZE))
         self.wall_tiles = [wall_tile1, wall_tile2, wall_tile3, wall_tile4]
         self.wall_tile_map = self.generate_wall_tile_map()
         # Load and scale both ground tile images
-        ground_tile1 = pygame.transform.scale(pygame.image.load('assets/dirt.png').convert(), (TILE_SIZE, TILE_SIZE))
-        ground_tile2 = pygame.transform.scale(pygame.image.load('assets/dirt2.png').convert(), (TILE_SIZE, TILE_SIZE))
+        ground_tile1 = pygame.transform.scale(pygame.image.load(resource_path('assets/dirt.png')).convert(), (TILE_SIZE, TILE_SIZE))
+        ground_tile2 = pygame.transform.scale(pygame.image.load(resource_path('assets/dirt2.png')).convert(), (TILE_SIZE, TILE_SIZE))
         # Store them in a list to choose from randomly
         self.ground_tiles = [ground_tile1, ground_tile2]
         self.ground_tile_map = self.generate_ground_tile_map()
