@@ -59,27 +59,43 @@ class Enemy:
     def start_flash(self):
         """Start the flash effect by changing the color to white."""
         self.is_flashing = True
-        self.image.fill((255, 255, 255))  # Change color to white
         self.flash_start_time = pygame.time.get_ticks()  # Record the time when the flash starts
+        
+    def update_flash(self):
+        """Update the flash effect and restore the original sprite after the flash duration."""
+        current_time = pygame.time.get_ticks()
+
+        if current_time - self.flash_start_time < self.flash_duration:
+            # Apply a flashing effect by adjusting the alpha value
+            flash_surface = self.image.copy()
+            flash_surface.fill((255, 255, 255, 128), special_flags=pygame.BLEND_RGBA_MULT)
+            self.image = flash_surface
+        else:
+            self.is_flashing = False
+            # Restore the normal image (no flashing)
+            self.restore_current_frame()
+    
+    def restore_current_frame(self):
+        """Restores the current frame of the enemy (idle, walk, or shoot) after flashing."""
+        if self.walking:
+            self.update_walk_animation()
+        else:
+            self.update_idle_animation()
 
     def update(self, player, walls, camera_offset, enemies):
         """Update enemy state, including movement, attacking, and flashing."""
         self.move_towards_player(player.rect, walls, enemies)
         self.melee_attack(player)
 
+        # Handle flashing state
         if self.is_flashing:
-            current_time = pygame.time.get_ticks()
-            if current_time - self.flash_start_time >= self.flash_duration:
-                self.image.fill(self.original_color)  # Revert to the original color
-                self.is_flashing = False
-
-        # Update the animation based on the current state (idle, walking, attacking)
-        if self.attacking:
-            self.update_attack_animation()
-        elif self.walking:
-            self.update_walk_animation()
+            self.update_flash()
         else:
-            self.update_idle_animation()
+            # Update animations based on movement and actions
+            if self.walking:
+                self.update_walk_animation()
+            else:
+                self.update_idle_animation()
 
     def update_idle_animation(self):
         """Update the idle animation by switching between the idle frames."""
@@ -266,14 +282,40 @@ class RangedEnemy(Enemy):
             self.last_shot_time = current_time
 
     def update(self, player, walls, camera_offset, enemies):
-        """Update enemy logic, including shooting and animations."""
-        # We don't call `super().update()` here to avoid melee-related updates from the base `Enemy` class
-        
+        """Update enemy logic, including shooting, flashing, and animations."""
         self.move_towards_player(player.rect, walls, enemies)  # Handle movement
         
-        self.shoot(player)  # Attempt to shoot at the player
-        
-        # Update the animation based on whether the enemy is shooting or walking
+        # Handle shooting
+        self.shoot(player)
+
+        # Handle flashing state
+        if self.is_flashing:
+            self.update_flash()  # Apply flash effect
+        else:
+            # Update the animation based on whether the enemy is shooting or walking
+            if self.shooting:
+                self.update_shoot_animation()
+            elif self.walking:
+                self.update_walk_animation()
+            else:
+                self.update_idle_animation()
+
+    def update_flash(self):
+        """Update the flash effect and restore the original sprite after the flash duration."""
+        current_time = pygame.time.get_ticks()
+
+        if current_time - self.flash_start_time < self.flash_duration:
+            # Apply a flashing effect by adjusting the alpha value
+            flash_surface = self.image.copy()
+            flash_surface.fill((255, 255, 255, 128), special_flags=pygame.BLEND_RGBA_MULT)
+            self.image = flash_surface
+        else:
+            self.is_flashing = False
+            # Restore the normal image (no flashing)
+            self.restore_current_frame()
+
+    def restore_current_frame(self):
+        """Restores the current frame of the enemy (idle, walking, or shooting) after flashing."""
         if self.shooting:
             self.update_shoot_animation()
         elif self.walking:
