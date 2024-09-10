@@ -22,6 +22,11 @@ def toggle_fullscreen(current_mode, screen, SCREEN_WIDTH, SCREEN_HEIGHT):
 def main():
     pygame.init()
     
+    pygame.mixer.init()
+    pygame.mixer.music.load('assets/movement.mp3') 
+    pygame.mixer.music.play(-1)
+    pygame.mixer.music.set_volume(0.5)  # 50% volume
+    
     info = pygame.display.Info()
     SCREEN_WIDTH = info.current_w
     SCREEN_HEIGHT = info.current_h
