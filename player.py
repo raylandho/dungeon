@@ -83,7 +83,7 @@ class Player:
         if self.check_collision(self.rect.topleft, walls, enemies):
             self.rect.topleft = original_position
             return  # Collision detected, abort teleport
-
+        self.play_teleport_animation(screen, camera_offset, original_position)
         # Update the last teleport time
         self.last_teleport_time = current_time
         #print("Teleport successful")
@@ -151,6 +151,24 @@ class Player:
 
             self.last_teleport_time = current_time  # Update the last teleport time
             print("Teleport attack successful")
+    
+    def play_teleport_animation(self, screen, camera_offset, original_position):
+        """Play the teleport animation at the given position."""
+        teleport_images = [
+            #pygame.transform.scale(pygame.image.load('assets/teleport.png').convert_alpha(), (TILE_SIZE, TILE_SIZE)),
+            pygame.transform.scale(pygame.image.load('assets/teleport2.png').convert_alpha(), (TILE_SIZE, TILE_SIZE)),
+            pygame.transform.scale(pygame.image.load('assets/teleport3.png').convert_alpha(), (TILE_SIZE, TILE_SIZE))
+        ]
+
+        # Calculate the position for the animation (center it on the original position)
+        screen_x = original_position[0] - camera_offset[0]
+        screen_y = original_position[1] - camera_offset[1]
+
+        # Loop through each frame and display it with a slight delay
+        for image in teleport_images:
+            screen.blit(image, (screen_x, screen_y))
+            pygame.display.flip()  # Update the display
+            pygame.time.delay(100)  # Delay for 100 milliseconds per frame
 
     def update_aim_direction(self, keys):
         direction = pygame.math.Vector2(0, 0)

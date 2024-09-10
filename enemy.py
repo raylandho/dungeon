@@ -6,9 +6,21 @@ from projectile import EnemyProjectile
 class Enemy:
     def __init__(self, x, y):
         self.size = 40  # Example size, adjust as needed
-        self.image = pygame.Surface((self.size, self.size))
-        self.image.fill((255, 0, 0))  # Red enemy for melee enemies
+        self.original_idle_images = [pygame.transform.scale(pygame.image.load('assets/goblinidle.png').convert_alpha(), (self.size, self.size)),
+                                     pygame.transform.scale(pygame.image.load('assets/goblinidle2.png').convert_alpha(), (self.size, self.size))]
+        self.original_walk_images = [pygame.transform.scale(pygame.image.load('assets/goblinwalk.png').convert_alpha(), (self.size, self.size)),
+                                     pygame.transform.scale(pygame.image.load('assets/goblinwalk2.png').convert_alpha(), (self.size, self.size))]
+        self.original_attack_images = [pygame.transform.scale(pygame.image.load('assets/goblinattack.png').convert_alpha(), (self.size, self.size)),
+                                       pygame.transform.scale(pygame.image.load('assets/goblinattack2.png').convert_alpha(), (self.size, self.size))]
+        
+        # Set initial images
+        self.idle_images = self.original_idle_images[:]
+        self.walk_images = self.original_walk_images[:]
+        self.attack_images = self.original_attack_images[:]
+        
+        self.image = self.idle_images[0]
         self.rect = self.image.get_rect(topleft=(x, y))
+        
         self.health = 50  # Example health value
         self.speed = 2  # Example speed value
         self.is_flashing = False
@@ -19,6 +31,21 @@ class Enemy:
         self.melee_damage = 10  # Damage dealt by melee attack
         self.attack_cooldown = 1000  # Cooldown between melee attacks in milliseconds
         self.last_attack_time = 0  # Track the last time the enemy attacked
+
+        # Animation frame tracking
+        self.current_idle_frame = 0
+        self.current_walk_frame = 0
+        self.current_attack_frame = 0
+        self.animation_speed = 300  # Time in milliseconds between frames
+        self.last_animation_time = pygame.time.get_ticks()
+        
+        # Attack animation tracking
+        self.attacking = False
+        self.attack_animation_duration = 500  # Time in milliseconds for the attack animation
+        self.attack_animation_start_time = 0
+        
+        # Direction tracking
+        self.facing_right = True  # Goblin starts facing right
 
     def take_damage(self, amount):
         """Reduce the enemy's health by a specified amount and trigger the flash effect."""
@@ -36,7 +63,7 @@ class Enemy:
         self.flash_start_time = pygame.time.get_ticks()  # Record the time when the flash starts
 
     def update(self, player, walls, camera_offset, enemies):
-        """Update enemy state, including movement and flashing."""
+        """Update enemy state, including movement, attacking, and flashing."""
         self.move_towards_player(player.rect, walls, enemies)
         self.melee_attack(player)
 
@@ -46,10 +73,68 @@ class Enemy:
                 self.image.fill(self.original_color)  # Revert to the original color
                 self.is_flashing = False
 
+        # Update the animation based on the current state (idle, walking, attacking)
+        if self.attacking:
+            self.update_attack_animation()
+        elif self.walking:
+            self.update_walk_animation()
+        else:
+            self.update_idle_animation()
+
+    def update_idle_animation(self):
+        """Update the idle animation by switching between the idle frames."""
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_animation_time >= self.animation_speed:
+            # Switch to the next frame
+            self.current_idle_frame = (self.current_idle_frame + 1) % len(self.idle_images)
+            self.image = self.idle_images[self.current_idle_frame]
+            self.last_animation_time = current_time
+
+        # Ensure correct facing direction
+        self.flip_animations_if_needed()
+
+    def update_walk_animation(self):
+        """Update the walk animation by switching between the walk frames."""
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_animation_time >= self.animation_speed:
+            # Switch to the next walk frame
+            self.current_walk_frame = (self.current_walk_frame + 1) % len(self.walk_images)
+            self.image = self.walk_images[self.current_walk_frame]
+            self.last_animation_time = current_time
+
+        # Ensure correct facing direction
+        self.flip_animations_if_needed()
+
+    def update_attack_animation(self):
+        """Update the attack animation by switching between the attack frames."""
+        current_time = pygame.time.get_ticks()
+
+        # Check if the animation duration has passed
+        if current_time - self.attack_animation_start_time >= self.attack_animation_duration:
+            # End attack animation and reset to idle or walk
+            self.attacking = False
+            return
+
+        # Switch to the next attack frame
+        frame_duration = self.attack_animation_duration // len(self.attack_images)
+        frame_index = (current_time - self.attack_animation_start_time) // frame_duration
+        self.image = self.attack_images[int(frame_index) % len(self.attack_images)]
+
+        # Ensure correct facing direction
+        self.flip_animations_if_needed()
+
     def move_towards_player(self, player_rect, walls, enemies):
         """Move the enemy towards the player without overlapping other enemies or the player."""
         dx = player_rect.x - self.rect.x
         dy = player_rect.y - self.rect.y
+
+        # Determine whether the goblin should face left or right
+        if dx > 0 and not self.facing_right:
+            self.facing_right = True
+            self.flip_animations_if_needed()
+        elif dx < 0 and self.facing_right:
+            self.facing_right = False
+            self.flip_animations_if_needed()
 
         if abs(dx) > abs(dy):
             new_pos = (self.rect.x + (self.speed if dx > 0 else -self.speed), self.rect.y)
@@ -59,6 +144,20 @@ class Enemy:
         # Prevent overlapping with walls, other enemies, and the player
         if not self.check_collision(new_pos, walls, enemies) and not self.check_collision_with_player(new_pos, player_rect):
             self.rect.topleft = new_pos
+            self.walking = True  # Set walking state when moving
+        else:
+            self.walking = False  # Set to idle when not moving
+
+    def flip_animations_if_needed(self):
+        """Flip all animations if the direction changes."""
+        if self.facing_right:
+            self.idle_images = self.original_idle_images[:]
+            self.walk_images = self.original_walk_images[:]
+            self.attack_images = self.original_attack_images[:]
+        else:
+            self.idle_images = [pygame.transform.flip(img, True, False) for img in self.original_idle_images]
+            self.walk_images = [pygame.transform.flip(img, True, False) for img in self.original_walk_images]
+            self.attack_images = [pygame.transform.flip(img, True, False) for img in self.original_attack_images]
 
     def check_collision(self, new_pos, walls, enemies):
         """Check for collision with walls and other enemies."""
@@ -81,16 +180,6 @@ class Enemy:
         future_rect = pygame.Rect(new_pos, (self.size, self.size))
         return future_rect.colliderect(player_rect)
 
-    def overlaps_with_other_enemies(self, new_pos, enemies):
-        """Check if the enemy overlaps with any other enemies at the new position."""
-        future_rect = pygame.Rect(new_pos, (self.size, self.size))
-        
-        # Check overlap with other enemies
-        for other_enemy in enemies:
-            if other_enemy != self and future_rect.colliderect(other_enemy.rect):
-                return True
-        return False
-
     def melee_attack(self, player):
         """Perform a melee attack on the player if within range and cooldown is over."""
         current_time = pygame.time.get_ticks()
@@ -101,6 +190,8 @@ class Enemy:
         distance_to_player = enemy_pos.distance_to(player_pos)
         
         if distance_to_player <= self.melee_range and current_time - self.last_attack_time >= self.attack_cooldown:
+            self.attacking = True
+            self.attack_animation_start_time = pygame.time.get_ticks()  # Start the attack animation timer
             player.take_damage(self.melee_damage)  # Inflict damage to the player
             self.last_attack_time = current_time  # Update last attack time
             print(f"Enemy dealt {self.melee_damage} damage to the player!")

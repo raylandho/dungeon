@@ -63,8 +63,10 @@ def main():
         nonlocal enemies, enemies_per_round
         # Increase difficulty each round by adding more enemies
         num_ranged = random.randint(1, current_round // 2 + 1)
+        #num_ranged = 0
         num_melee = random.randint(2, current_round + 2)
-        num_boss = 1 + current_round // 3 # Add a boss enemy every 3 rounds
+        #num_boss = 1 + current_round // 3 # Add a boss enemy every 3 rounds
+        num_boss = 0
 
         ranged_enemies = [RangedEnemy(*dungeon.get_random_open_position(), SCREEN_WIDTH, SCREEN_HEIGHT) for _ in range(num_ranged)]
         melee_enemies = [Enemy(*dungeon.get_random_open_position()) for _ in range(num_melee)]
