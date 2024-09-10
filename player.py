@@ -5,9 +5,40 @@ from projectile import Projectile, MeleeAttack, Fireball, LightningStrike
 class Player:
     def __init__(self, x, y):
         self.size = PLAYER_SIZE
-        self.image = pygame.Surface((self.size, self.size))
-        self.image.fill((0, 255, 0))  # Green player
-        self.rect = self.image.get_rect(topleft=(x, y))
+        self.rect = pygame.Rect(x, y, self.size, self.size)
+        
+        # Animation state
+        self.animation_state = 'idle'
+        self.current_frame = 0
+        self.frame_switch_time = 200  # Switch every 200 ms
+        self.last_frame_switch = pygame.time.get_ticks()
+
+        # Load animations (assuming you have two frames for each)
+        self.animations = {
+            'idle': [
+                pygame.transform.scale(pygame.image.load('assets/playeridle.png').convert_alpha(), (self.size, self.size)),
+                pygame.transform.scale(pygame.image.load('assets/playeridle2.png').convert_alpha(), (self.size, self.size))
+            ],
+            'walk': [
+                pygame.transform.scale(pygame.image.load('assets/playerwalk.png').convert_alpha(), (self.size, self.size)),
+                pygame.transform.scale(pygame.image.load('assets/playerwalk2.png').convert_alpha(), (self.size, self.size))
+            ],
+            'attack': [
+                pygame.transform.scale(pygame.image.load('assets/playerattack.png').convert_alpha(), (self.size, self.size)),
+                pygame.transform.scale(pygame.image.load('assets/playerattack2.png').convert_alpha(), (self.size, self.size))
+            ],
+            'cast': [
+                pygame.transform.scale(pygame.image.load('assets/playercast.png').convert_alpha(), (self.size, self.size)),
+                pygame.transform.scale(pygame.image.load('assets/playercast2.png').convert_alpha(), (self.size, self.size))
+            ]
+        }
+        
+        # Set the initial image
+        self.image = self.animations['idle'][0]
+        
+        self.is_moving = False
+        self.is_attacking = False
+        self.is_casting = False
         self.max_health = 100
         self.health = self.max_health
         self.max_mana = 50
@@ -17,6 +48,11 @@ class Player:
         self.level = 1
         self.points = 0  # Points for leveling up
         self.is_dead = False
+        
+        # Durations for animations
+        self.attack_duration = 300  # 300 ms for attack animation
+        self.cast_duration = 300  # 300 ms for cast animation
+        
         self.attack_cooldown = 500  # Cooldown for attacks
         self.last_attack_time = pygame.time.get_ticks()
         self.teleport_cooldown = 2000  # Cooldown for teleporting (in milliseconds)
@@ -28,11 +64,50 @@ class Player:
         self.lightning_strike = None
         self.lightning_unlocked = False
         self.teleport_attack_unlocked = False
+    
+    def update_animation(self):
+        """Update the animation frame based on the current action."""
+        current_time = pygame.time.get_ticks()
+
+        # Check if it's time to switch the frame
+        if current_time - self.last_frame_switch >= self.frame_switch_time:
+            self.current_frame = (self.current_frame + 1) % 2  # Toggle between frame 0 and 1
+            self.last_frame_switch = current_time
+
+        # Reset attack or cast state if duration has passed
+        if self.is_attacking and current_time - self.last_attack_time > self.attack_duration:
+            self.is_attacking = False
+        if self.is_casting and current_time - self.last_cast_time > self.cast_duration:
+            self.is_casting = False
+
+        # Update the current animation state
+        if self.is_attacking:
+            self.animation_state = 'attack'
+        elif self.is_casting:
+            self.animation_state = 'cast'
+        elif self.is_moving:
+            self.animation_state = 'walk'
+        else:
+            self.animation_state = 'idle'
+
+        # Update the image to the correct frame
+        self.image = self.animations[self.animation_state][self.current_frame]
+        
+        # Flip the image if the player is moving or aiming left
+        if self.aim_direction.x < 0:
+            self.is_flipped = True
+        elif self.aim_direction.x > 0:
+            self.is_flipped = False
+
+        # Apply flipping if needed
+        if self.is_flipped:
+            self.image = pygame.transform.flip(self.image, True, False)
 
     def handle_movement(self, keys, walls, dungeon_width, dungeon_height, enemies):
         movement_speed = 3
         direction = pygame.math.Vector2(0, 0)
-
+        self.is_moving = False
+        
         if keys[pygame.K_LEFT]:
             direction.x = -1
         if keys[pygame.K_RIGHT]:
@@ -202,6 +277,7 @@ class Player:
         return False
 
     def draw(self, screen, camera_offset):
+        self.update_animation()
         screen_x = self.rect.x - camera_offset[0]
         screen_y = self.rect.y - camera_offset[1]
         screen.blit(self.image, (screen_x, screen_y))
@@ -256,17 +332,24 @@ class Player:
             pygame.draw.polygon(screen, (0, 0, 0), [end_pos] + arrowhead_points)
 
     def melee_attack(self, enemies):
+        """Initiate a melee attack."""
         current_time = pygame.time.get_ticks()
         if current_time - self.last_attack_time >= self.attack_cooldown:
+            self.is_attacking = True
             self.last_attack_time = current_time
-            melee_attack = MeleeAttack(self.rect, self.aim_direction)  # Pass aim direction
+            melee_attack = MeleeAttack(self.rect, self.aim_direction)
             kills = melee_attack.check_collision(enemies)
             if kills > 0:
                 self.gain_xp(50 * kills)
+        else:
+            self.is_attacking = False  # Reset attack after cooldown
 
     def ranged_attack(self, projectiles, screen_width, screen_height):
+        """Perform a basic ranged attack."""
         current_time = pygame.time.get_ticks()
         if current_time - self.last_attack_time >= self.attack_cooldown and self.mana >= 10:
+            self.is_casting = True
+            self.last_cast_time = current_time  # Track when the cast started
             projectile = Projectile(
                 self.rect.centerx, 
                 self.rect.centery, 
@@ -277,12 +360,17 @@ class Player:
             projectiles.append(projectile)
             self.use_mana(10)
             self.last_attack_time = current_time
+        else:
+            self.is_casting = False  # Reset casting after cooldown
     
     def fireball_attack(self, projectiles, screen_width, screen_height):
+        """Cast a fireball."""
         current_time = pygame.time.get_ticks()
         fireball_mana_cost = 20  # Adjust mana cost for the fireball
 
         if current_time - self.last_attack_time >= self.attack_cooldown and self.mana >= fireball_mana_cost:
+            self.is_casting = True
+            self.last_cast_time = current_time  # Track when the cast started
             fireball = Fireball(
                 self.rect.centerx, 
                 self.rect.centery, 
@@ -293,6 +381,8 @@ class Player:
             projectiles.append(fireball)
             self.use_mana(fireball_mana_cost)
             self.last_attack_time = current_time
+        else:
+            self.is_casting = False  # Reset casting after cooldown
     
     def unlock_fireball(self):
         self.fireball_unlocked = True
@@ -303,12 +393,14 @@ class Player:
 
         # Check if player has enough mana
         if self.mana >= lightning_strike_mana_cost:
+            self.is_casting = True
+            self.last_cast_time = pygame.time.get_ticks()  # Track casting time
             self.is_placing_lightning = True
-            # Start lightning strike at the player's position initially
             self.lightning_strike = LightningStrike(self.rect.centerx, self.rect.centery, screen_width, screen_height)
-            self.use_mana(lightning_strike_mana_cost)  # Deduct mana
+            self.use_mana(lightning_strike_mana_cost)
         else:
             print("Not enough mana to use Lightning Strike!")
+            self.is_casting = False
 
     def confirm_lightning_strike(self, enemies, screen, camera_offset): 
         """Confirm the lightning strike, damage enemies, and exit lightning mode."""
@@ -319,6 +411,7 @@ class Player:
             print(f"Lightning Strike hit {struck_enemies} enemies!")
         self.is_placing_lightning = False
         self.lightning_strike = None
+        self.is_casting = False
     
     def play_lightning_animation(self, screen, camera_offset):
         """Play the 4-part lightning strike animation in quick succession."""
