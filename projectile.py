@@ -184,8 +184,8 @@ class LightningStrike:
         for enemy in enemies:
             enemy_distance = self.target_position.distance_to(enemy.rect.center)
             if enemy_distance <= self.strike_radius:
-                if enemy.take_damage(75):  # Lightning does 75 damage
-                    print(f"Enemy took 75 damage, remaining health: {enemy.health}")
+                if enemy.take_damage(200): 
+                    print(f"Enemy took 200 damage, remaining health: {enemy.health}")
                 if enemy.health <= 0:  # Enemy is dead, mark for removal and reward XP
                     enemies_to_remove.append(enemy)
                     player.gain_xp(50)  # Reward 50 XP for each kill

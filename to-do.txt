@@ -5,10 +5,8 @@ Easy
 
 Medium
 - Make ranged mob stop moving when they can shoot at player
-- Lightning Strike animation not centered properly
 
 Hard
-- Add artwork
 - Add soundtrack
 - Add sound effects
 
