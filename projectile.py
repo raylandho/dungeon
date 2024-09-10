@@ -73,7 +73,7 @@ class Projectile:
 class Fireball(Projectile):
     def __init__(self, x, y, direction, screen_width, screen_height, speed=7, size=None):
         if size is None:
-            size = PLAYER_SIZE * 2.5  # Default size for the fireball
+            size = PLAYER_SIZE * 1.5  # Default size for the fireball
         self.size = size
 
         # Calculate the fireball's initial position directly in front of the player
