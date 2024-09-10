@@ -92,6 +92,12 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
                 
+            if event.type == pygame.USEREVENT + 1:
+                # Reset the tiles that were highlighted by the melee attack
+                if hasattr(player, 'melee_attack_object') and player.melee_attack_object:
+                    player.melee_attack_object.reset_tiles(dungeon)
+                    player.melee_attack_object = None 
+                
             if game_over:
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                     # Restart the game
@@ -113,7 +119,7 @@ def main():
                     if event.key == pygame.K_SPACE and not game_started:
                         game_started = True
                     if event.key == inventory.keybindings["Melee Attack"] and not inventory.is_open:
-                        player.melee_attack(enemies)
+                        player.melee_attack(enemies, dungeon)
                     if event.key == inventory.keybindings["Ranged Attack"] and not inventory.is_open:
                         player.ranged_attack(projectiles, dungeon_width_in_tiles * TILE_SIZE, dungeon_height_in_tiles * TILE_SIZE)
                     if event.key == inventory.keybindings["Fireball"] and not inventory.is_open and player.fireball_unlocked:

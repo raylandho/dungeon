@@ -18,6 +18,7 @@ class Player:
         self.points = 0  # Points for leveling up
         self.is_dead = False
         self.attack_cooldown = 500  # Cooldown for attacks
+        self.melee_attack_object = None
         self.last_attack_time = pygame.time.get_ticks()
         self.teleport_cooldown = 2000  # Cooldown for teleporting (in milliseconds)
         self.last_teleport_time = pygame.time.get_ticks()  # Time of last teleport
@@ -255,14 +256,16 @@ class Player:
             ]
             pygame.draw.polygon(screen, (0, 0, 0), [end_pos] + arrowhead_points)
 
-    def melee_attack(self, enemies):
+    def melee_attack(self, enemies, dungeon):
         current_time = pygame.time.get_ticks()
         if current_time - self.last_attack_time >= self.attack_cooldown:
             self.last_attack_time = current_time
             melee_attack = MeleeAttack(self.rect, self.aim_direction)  # Pass aim direction
-            kills = melee_attack.check_collision(enemies)
+            kills = melee_attack.check_collision(enemies, dungeon)
             if kills > 0:
                 self.gain_xp(50 * kills)
+            self.melee_attack_object = melee_attack  # Store the melee attack object
+            return melee_attack
 
     def ranged_attack(self, projectiles, screen_width, screen_height):
         current_time = pygame.time.get_ticks()

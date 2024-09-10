@@ -1,5 +1,6 @@
 import pygame
 import math
+import random
 from settings import PLAYER_SIZE, TILE_SIZE
 
 class Projectile:
@@ -184,8 +185,8 @@ class LightningStrike:
         for enemy in enemies:
             enemy_distance = self.target_position.distance_to(enemy.rect.center)
             if enemy_distance <= self.strike_radius:
-                if enemy.take_damage(75):  # Lightning does 75 damage
-                    print(f"Enemy took 75 damage, remaining health: {enemy.health}")
+                if enemy.take_damage(200): 
+                    print(f"Enemy took 200 damage, remaining health: {enemy.health}")
                 if enemy.health <= 0:  # Enemy is dead, mark for removal and reward XP
                     enemies_to_remove.append(enemy)
                     player.gain_xp(50)  # Reward 50 XP for each kill
@@ -198,11 +199,10 @@ class LightningStrike:
 
 class MeleeAttack:
     def __init__(self, player_rect, aim_direction, attack_range=50, damage=50):
-        # Set the attack range to be in front of the player based on aim direction
         attack_offset_x = aim_direction.x * (player_rect.width // 2 + attack_range // 2)
         attack_offset_y = aim_direction.y * (player_rect.height // 2 + attack_range // 2)
 
-        # Create a rectangle that represents the melee hitbox directly in front of the player
+        # Create a rectangle that represents the melee hitbox
         self.rect = pygame.Rect(
             player_rect.centerx + attack_offset_x - attack_range // 2,
             player_rect.centery + attack_offset_y - attack_range // 2,
@@ -210,16 +210,48 @@ class MeleeAttack:
             attack_range
         )
         self.damage = damage
+        self.affected_tiles = []  # Track affected tiles
 
-    def check_collision(self, enemies):
+    def check_collision(self, enemies, dungeon):
         """Check if the melee attack hits any enemies and apply damage."""
         kills = 0
+        affected_tiles = []
+
+        # Check for enemy collisions
         for enemy in enemies[:]:
             if self.rect.colliderect(enemy.rect):
                 if enemy.take_damage(self.damage):
                     enemies.remove(enemy)
                     kills += 1
+
+        # Find tiles affected by the melee attack
+        for row_index, row in enumerate(dungeon.layout):
+            for col_index, tile in enumerate(row):
+                tile_rect = pygame.Rect(col_index * TILE_SIZE, row_index * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                if tile == '0' and self.rect.colliderect(tile_rect):  # Only highlight walkable tiles ('0')
+                    affected_tiles.append((row_index, col_index))
+
+        # Highlight the affected tiles
+        self.highlight_tiles(dungeon, affected_tiles)
         return kills
+
+    def highlight_tiles(self, dungeon, affected_tiles, duration=200):
+        """Highlight the affected tiles in the dungeon layout temporarily."""
+        self.affected_tiles = affected_tiles  # Store affected tiles
+
+        for row, col in affected_tiles:
+            # Temporarily change the tile to a highlighted state (e.g., switching to a bright tile)
+            dungeon.ground_tile_map[row][col] = pygame.Surface((TILE_SIZE, TILE_SIZE))
+            dungeon.ground_tile_map[row][col].fill((255, 255, 0))  # Set to bright yellow
+
+        # Set a timer to reset the tiles after the specified duration
+        pygame.time.set_timer(pygame.USEREVENT + 1, duration, True)
+
+    def reset_tiles(self, dungeon):
+        """Reset the affected tiles back to their original state."""
+        for row, col in self.affected_tiles:
+            # Restore the original tile from the dungeon's ground tile map
+            dungeon.ground_tile_map[row][col] = random.choice(dungeon.ground_tiles)  # Restore a random ground tile
 
 class EnemyProjectile(Projectile):
     def __init__(self, x, y, direction, screen_width, screen_height, speed=5, size=None):
