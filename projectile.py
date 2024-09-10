@@ -198,9 +198,12 @@ class LightningStrike:
 
 class MeleeAttack:
     def __init__(self, player_rect, aim_direction, attack_range=50, damage=50):
-        # Set the attack range to be in front of the player based on aim direction
         attack_offset_x = aim_direction.x * (player_rect.width // 2 + attack_range // 2)
         attack_offset_y = aim_direction.y * (player_rect.height // 2 + attack_range // 2)
+
+        slash_image = pygame.image.load('assets/slash.png').convert_alpha()
+        self.slash_image = pygame.transform.scale(slash_image, (attack_range, attack_range))
+        self.slash_image = self.rotate_slash_by_direction(self.slash_image, aim_direction)
 
         # Create a rectangle that represents the melee hitbox directly in front of the player
         self.rect = pygame.Rect(
@@ -210,6 +213,29 @@ class MeleeAttack:
             attack_range
         )
         self.damage = damage
+        self.is_active = True
+        self.slash_duration = 200  # Slash lasts for 200 milliseconds
+        self.start_time = pygame.time.get_ticks()
+
+    def rotate_slash_by_direction(self, image, direction):
+        """Rotate the slash image based on the player's aim direction."""
+        angle = math.degrees(math.atan2(-direction.y, direction.x))  # Calculate the angle
+        adjusted_angle = angle - 45
+        rotated_image = pygame.transform.rotate(image, adjusted_angle)
+        return rotated_image
+
+    def update(self):
+        """Update the melee attack and check if it should still be active."""
+        current_time = pygame.time.get_ticks()
+        if current_time - self.start_time > self.slash_duration:
+            self.is_active = False  # Deactivate the slash effect after the duration ends
+
+    def draw(self, screen, camera_offset):
+        """Draw the slash effect if it's still active."""
+        if self.is_active and self.slash_image:
+            screen_x = self.rect.x - camera_offset[0]
+            screen_y = self.rect.y - camera_offset[1]
+            screen.blit(self.slash_image, (screen_x, screen_y))
 
     def check_collision(self, enemies):
         """Check if the melee attack hits any enemies and apply damage."""

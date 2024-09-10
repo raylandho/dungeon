@@ -64,6 +64,7 @@ class Player:
         self.lightning_strike = None
         self.lightning_unlocked = False
         self.teleport_attack_unlocked = False
+        self.melee_attack_instance = None
     
     def update_animation(self):
         """Update the animation frame based on the current action."""
@@ -281,6 +282,8 @@ class Player:
         screen_x = self.rect.x - camera_offset[0]
         screen_y = self.rect.y - camera_offset[1]
         screen.blit(self.image, (screen_x, screen_y))
+        if self.melee_attack_instance:
+            self.melee_attack_instance.draw(screen, camera_offset)
         self.draw_health_and_mana(screen)
         self.draw_xp_text(screen)
         self.draw_level_text(screen)
@@ -337,13 +340,22 @@ class Player:
         if current_time - self.last_attack_time >= self.attack_cooldown:
             self.is_attacking = True
             self.last_attack_time = current_time
-            melee_attack = MeleeAttack(self.rect, self.aim_direction)
-            kills = melee_attack.check_collision(enemies)
+            # Create the melee attack instance
+            self.melee_attack_instance = MeleeAttack(self.rect, self.aim_direction)
+            kills = self.melee_attack_instance.check_collision(enemies)
             if kills > 0:
                 self.gain_xp(50 * kills)
         else:
-            self.is_attacking = False  # Reset attack after cooldown
+            self.is_attacking = False  # Reset after the attack
 
+    def update(self):
+        """Update player and active melee attack."""
+        # Update the active melee attack if it exists
+        if self.melee_attack_instance:
+            self.melee_attack_instance.update()
+            if not self.melee_attack_instance.is_active:
+                self.melee_attack_instance = None 
+                
     def ranged_attack(self, projectiles, screen_width, screen_height):
         """Perform a basic ranged attack."""
         current_time = pygame.time.get_ticks()

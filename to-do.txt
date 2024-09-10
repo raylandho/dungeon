@@ -4,7 +4,6 @@ Easy
 - boss enemies should give more than 50 xp
 
 Medium
-- Make ranged mob stop moving when they can shoot at player
 
 Hard
 - Add soundtrack

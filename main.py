@@ -285,7 +285,7 @@ def main():
         # Draw all enemies
         for enemy in enemies:
             enemy.draw(screen, camera_offset)
-
+        player.update()
         player.draw(screen, camera_offset)
         
         # Draw round number on the top right corner
