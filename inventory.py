@@ -20,9 +20,9 @@ class Inventory:
         self.attack_costs = {
             "Projectile Attack": 0,
             "Melee Attack": 0,
-            "Fireball": 4,
-            "Teleport Attack": 2,
-            "Lightning Strike": 5,
+            "Fireball": 3,
+            "Teleport Attack": 5,
+            "Lightning Strike": 4,
             "Increase Max Health": 1,
             "Increase Max Mana": 1,
         }
